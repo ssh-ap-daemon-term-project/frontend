@@ -1,0 +1,13 @@
+.navbar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    background-color: #5664ff50;
+    padding: 10px;
+    position: fixed;
+    width: 100%;
+}
+
+.navbar > a {
+    padding: 0 10px;
+}

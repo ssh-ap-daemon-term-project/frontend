@@ -96,6 +96,7 @@ const Auth = () => {
                     className={styles.chk}
                     aria-hidden="true"
                     ref={checkboxRef}
+                    defaultChecked={true}
                     onChange={(e) => setIsSignin(e.target.checked)}
                 />
 

@@ -12,10 +12,15 @@ const Auth = () => {
     const [isSignin, setIsSignin] = useState(false);
     const [formData, setFormData] = useState({
         username: '',
+        name: '',
+        dob: '',
+        gender: '',
         email: '',
         phone: '',
+        address: '',
         password: ''
     });
+
 
     const [loading, setLoading] = useState(false);
 
@@ -34,11 +39,14 @@ const Auth = () => {
         try {
             const response = await signup(
                 formData.username,
+                formData.name,
+                formData.dob,
+                formData.gender,
                 formData.email,
-                formData.password,
-                formData.phone
+                formData.phone,
+                formData.address,
+                formData.password
             );
-
             console.log(response);
 
             toast.success('Account created successfully! Please sign in.');
@@ -94,46 +102,74 @@ const Auth = () => {
                 <div className={styles.signup}>
                     <form onSubmit={handleSignup}>
                         <label htmlFor="chk" aria-hidden="true">Sign up</label>
+                        <div className={styles.signupForm}>
+                            <input
+                                type="text"
+                                name="username"
+                                placeholder="Username"
+                                required
+                                value={formData.username}
+                                onChange={handleChange}
+                            />
 
-                        <input
-                            type="text"
-                            name="username"
-                            placeholder="Username"
-                            required
-                            value={formData.username}
-                            onChange={handleChange}
-                        />
+                            <input
+                                type="password"
+                                name="password"
+                                placeholder="Password"
 
-                        <input
-                            type="password"
-                            name="password"
-                            placeholder="Password"
+                                required
+                                value={formData.password}
+                                onChange={handleChange}
+                            />
 
-                            required
-                            value={formData.password}
-                            onChange={handleChange}
-                        />
+                            <input
+                                type="email"
+                                name="email"
+                                placeholder="Email"
+                                required
+                                value={formData.email}
+                                onChange={handleChange}
+                            />
 
-                        <input
-                            type="email"
-                            name="email"
-                            placeholder="Email"
-                            required
-                            value={formData.email}
-                            onChange={handleChange}
-                        />
+                            <input
+                                type="date"
+                                name="dob"
+                                placeholder="Date of Birth"
+                                required
+                                value={formData.dob}
+                                onChange={handleChange}
+                                style={{color:"grey"}}
+                            />
 
-                        <input
-                            type="tel"
-                            name="phone"
-                            placeholder="Phone Number"
-                            required
-                            value={formData.phone}
-                            onChange={handleChange}
-                        />
 
-                        <button 
-                            type="submit" 
+                            <select name="gender" required value={formData.gender} onChange={handleChange}>
+                                <option value="">Select Gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+
+                            <input
+                                type="tel"
+                                name="phone"
+                                placeholder="Phone Number"
+                                required
+                                value={formData.phone}
+                                onChange={handleChange}
+                            />
+
+                            <input
+                                type="text"
+                                name="address"
+                                placeholder="Address"
+                                required
+                                value={formData.address}
+                                onChange={handleChange}
+                            />
+
+                        </div>
+                        <button
+                            type="submit"
                             disabled={loading}
                         >
                             {loading && isSignin === false ? 'Processing...' : 'Sign up'}
@@ -163,7 +199,7 @@ const Auth = () => {
                             onChange={handleChange}
                         />
 
-                        <button 
+                        <button
                             type="submit"
                             disabled={loading}
                         >

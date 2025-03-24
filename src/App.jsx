@@ -2,7 +2,7 @@ import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import Navbar from './components/Navbar';
+import Navbar from './components/navbar/Navbar';
 import Auth from './pages/auth/Auth';
 import Home from './pages/home/Home';
 import PWABadge from './PWABadge';

@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
                 email: parsedData.email || '',
                 phone: parsedData.phone || '',
                 userType: parsedData.userType || '',
-                isAuthenticated: true  // If we have stored data, user is authenticated
+                isAuthenticated: !!parsedData.userId  // If we have stored data and userId is not null, user is authenticated
             };
         } else {
             // Default values if nothing in localStorage

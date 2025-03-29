@@ -15,10 +15,15 @@ import Hotelpage from './pages/hotel/hotel-page';
 function App() {
   return (
     <>
-      {/* <Header></Header>
-      <Home></Home> */}
+      <Header />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/customer" element={<AdminCustomer />} />
+        <Route path="/hotel" element={<Hotelpage />} />
+      </Routes>
 
-      <Hotelpage />
       <ToastContainer />
       <PWABadge />
     </>

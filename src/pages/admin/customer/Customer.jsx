@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-// Import your API function
-import { getAllCustomers, deleteCustomer } from '../../../api/admin'; // Adjust this import path
-import { toast } from 'react-toastify';
+// import React, { useEffect, useState } from 'react';
+// // Import your API function
+// import { getAllCustomers, deleteCustomer } from '../../../api/admin'; // Adjust this import path
+// import { toast } from 'react-toastify';
 
 const Customer = () => {
     const [customers, setCustomers] = useState([]);
@@ -38,7 +38,7 @@ const Customer = () => {
     return (
         <div>
             <h1>Customer Management</h1>
-            
+{/*             
             {loading && <p>Loading customers...</p>}
             
             {!loading && customers.length === 0 && (
@@ -70,7 +70,7 @@ const Customer = () => {
                         ))}
                     </tbody>
                 </table>
-            )}
+            )} */}
         </div>
     );
 };

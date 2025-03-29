@@ -23,6 +23,12 @@ export default function DashboardHeader() {
         </div>
         <div className="flex items-center gap-4">
           <Link to="/">Home</Link>
+          {userType === 'admin' &&
+            <Link to="/admin">Dashboard</Link>
+          }
+          {userType === 'hotel' &&
+            <Link to="/hotel">Dashboard</Link>
+          }
           {isAuthenticated && <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -43,7 +49,7 @@ export default function DashboardHeader() {
                 <DropdownMenuItem>Profile</DropdownMenuItem>
                 <DropdownMenuItem>Settings</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Log out</DropdownMenuItem>
+                <DropdownMenuItem onClick={contextSignout}>Sign out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           }

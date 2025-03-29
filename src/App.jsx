@@ -11,6 +11,7 @@ import Hero from './components/ui/custom/Hero';
 import Header from './components/ui/custom/Header';
 import Home from './pages/Home';
 import HotelDashboard from './pages/hotel/hotel-page';
+import HotelProfile from './pages/hotel/components/profile-hotel';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/auth" element={<Auth />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/hotel" element={<HotelDashboard />} />
+        <Route path="/hotel/profile" element={<HotelProfile />} />
       </Routes>
 
       <ToastContainer />

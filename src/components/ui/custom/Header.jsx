@@ -12,9 +12,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Link } from "react-router-dom"
 import { AuthContext } from "@/context/AuthContext"
 import { useContext } from "react"
+import { useNavigate } from "react-router-dom"
 
 export default function DashboardHeader() {
   const { isAuthenticated, userType, contextSignout } = useContext(AuthContext);
+  const navigate = useNavigate();
   return (
     <header className="sticky shadow-sm px-3 top-0 z-40 border-b bg-background">
       <div className="container flex h-16 items-center justify-between py-4">
@@ -46,8 +48,7 @@ export default function DashboardHeader() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/hotel/profile")}>Profile</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={contextSignout}>Sign out</DropdownMenuItem>
               </DropdownMenuContent>

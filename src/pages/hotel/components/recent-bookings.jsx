@@ -2,46 +2,41 @@
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { useState, useEffect } from "react"
+import { getRecentBookings } from "@/api/hotel" // Assuming this API function exists or needs to be created
 
 export function RecentBookings() {
-  const bookings = [
-    {
-      id: "B001",
-      customer: "John Doe",
-      initials: "JD",
-      roomType: "Luxury",
-      startDate: "2023-05-15",
-      endDate: "2023-05-20",
-      status: "confirmed",
-    },
-    {
-      id: "B002",
-      customer: "Jane Smith",
-      initials: "JS",
-      roomType: "Suite",
-      startDate: "2023-05-16",
-      endDate: "2023-05-18",
-      status: "pending",
-    },
-    {
-      id: "B003",
-      customer: "Robert Johnson",
-      initials: "RJ",
-      roomType: "Basic",
-      startDate: "2023-05-17",
-      endDate: "2023-05-19",
-      status: "confirmed",
-    },
-    {
-      id: "B004",
-      customer: "Emily Davis",
-      initials: "ED",
-      roomType: "Luxury",
-      startDate: "2023-05-18",
-      endDate: "2023-05-22",
-      status: "cancelled",
-    },
-  ]
+  const [bookings, setBookings] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const response = await getRecentBookings();
+        if (!response.ok) {
+          setBookings([]);
+        } else {
+          setBookings(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching bookings:", error);
+        toast.error("Error fetching recent bookings");
+        setBookings([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return <div className="text-center py-4">Loading recent bookings...</div>;
+  }
+
+  if (!bookings || bookings.length === 0) {
+    return <div className="text-center py-4">No recent bookings found</div>;
+  }
 
   return (
     <div className="space-y-4">
@@ -73,4 +68,3 @@ export function RecentBookings() {
     </div>
   )
 }
-

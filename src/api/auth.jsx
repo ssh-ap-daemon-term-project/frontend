@@ -5,12 +5,10 @@ const API = axios.create({
     withCredentials: true // allows HTTP-only cookies to be sent
 });
 
-export const signup = async (username, email, password, phone) =>
-    {
-        return await API.post('/auth/signup', { username, email, password, phone });
-    }
+export const signup = async (username, email, password, phone) => {
+    return await API.post('/auth/signup', { username, email, password, phone });
+}
 
-export const signin = async (username, password) =>
-    {
-        return await API.post('/auth/signin', { username, password });
-    }
+export const signin = async (username, password) => {
+    return await API.post('/auth/signin', { username, password });
+}

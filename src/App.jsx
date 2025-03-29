@@ -3,7 +3,6 @@ import { Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Navbar from './components/navbar/Navbar';
-import Home from './pages/home/Home';
 import Auth from './pages/auth/Auth';
 import AdminDashboard from './pages/admin/dashboard/Dashboard';
 import AdminCustomer from './pages/admin/customer/Customer';
@@ -19,7 +18,7 @@ function App() {
       {/* <Header></Header>
       <Home></Home> */}
 
-      <Hotelpage></Hotelpage>
+      <Hotelpage />
       <ToastContainer />
       <PWABadge />
     </>

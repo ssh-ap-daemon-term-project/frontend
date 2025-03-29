@@ -3,24 +3,22 @@ import { Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Navbar from './components/navbar/Navbar';
-import Home from './pages/home/Home';
 import Auth from './pages/auth/Auth';
 import AdminDashboard from './pages/admin/dashboard/Dashboard';
 import AdminCustomer from './pages/admin/customer/Customer';
 import PWABadge from './PWABadge';
+import Hero from './components/ui/custom/Hero';
+import Header from './components/ui/custom/Header';
+import Home from './pages/Home';
+import Hotelpage from './pages/hotel/hotel-page';
 
 function App() {
   return (
     <>
-      <div>
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/customer" element={<AdminCustomer />} />
-        </Routes>
-      </div>
+      {/* <Header></Header>
+      <Home></Home> */}
+
+      <Hotelpage />
       <ToastContainer />
       <PWABadge />
     </>

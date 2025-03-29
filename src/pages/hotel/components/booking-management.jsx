@@ -1,0 +1,285 @@
+
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useForm } from "react-hook-form"
+import { Badge } from "@/components/ui/badge"
+import { Pencil, Trash2, Search } from "lucide-react"
+
+// Mock data for bookings
+const bookingsData = [
+  {
+    id: 1,
+    no_persons: 2,
+    custfk: 101,
+    roomfk: 1,
+    start_date: "2023-05-15",
+    end_date: "2023-05-20",
+    customer_name: "John Doe",
+    room_type: "Basic",
+    status: "confirmed",
+  },
+  {
+    id: 2,
+    no_persons: 3,
+    custfk: 102,
+    roomfk: 2,
+    start_date: "2023-05-16",
+    end_date: "2023-05-18",
+    customer_name: "Jane Smith",
+    room_type: "Luxury",
+    status: "pending",
+  },
+  {
+    id: 3,
+    no_persons: 2,
+    custfk: 103,
+    roomfk: 1,
+    start_date: "2023-05-17",
+    end_date: "2023-05-19",
+    customer_name: "Robert Johnson",
+    room_type: "Basic",
+    status: "confirmed",
+  },
+  {
+    id: 4,
+    no_persons: 4,
+    custfk: 104,
+    roomfk: 3,
+    start_date: "2023-05-18",
+    end_date: "2023-05-22",
+    customer_name: "Emily Davis",
+    room_type: "Suite",
+    status: "cancelled",
+  },
+  {
+    id: 5,
+    no_persons: 2,
+    custfk: 105,
+    roomfk: 2,
+    start_date: "2023-05-20",
+    end_date: "2023-05-25",
+    customer_name: "Michael Wilson",
+    room_type: "Luxury",
+    status: "confirmed",
+  },
+]
+
+export default function BookingManagement() {
+  const [bookings, setBookings] = useState(bookingsData)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [selectedBooking, setSelectedBooking] = useState(null)
+  const [searchTerm, setSearchTerm] = useState("")
+
+  const form = useForm({
+    defaultValues: {
+      no_persons: "",
+      status: "",
+      start_date: "",
+      end_date: "",
+    },
+  })
+
+  const handleEditBooking = (data) => {
+    const updatedBookings = bookings.map((booking) => {
+      if (booking.id === selectedBooking.id) {
+        return {
+          ...booking,
+          no_persons: Number.parseInt(data.no_persons),
+          status: data.status,
+          start_date: data.start_date,
+          end_date: data.end_date,
+        }
+      }
+      return booking
+    })
+    setBookings(updatedBookings)
+    setIsEditDialogOpen(false)
+    setSelectedBooking(null)
+    form.reset()
+  }
+
+  const handleDeleteBooking = (id) => {
+    const updatedBookings = bookings.filter((booking) => booking.id !== id)
+    setBookings(updatedBookings)
+  }
+
+  const openEditDialog = (booking) => {
+    setSelectedBooking(booking)
+    form.setValue("no_persons", booking.no_persons.toString())
+    form.setValue("status", booking.status)
+    form.setValue("start_date", booking.start_date)
+    form.setValue("end_date", booking.end_date)
+    setIsEditDialogOpen(true)
+  }
+
+  const filteredBookings = bookings.filter(
+    (booking) =>
+      booking.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      booking.room_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      booking.status.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Booking Management</CardTitle>
+        <CardDescription>View and manage all room bookings</CardDescription>
+        <div className="flex w-full max-w-sm items-center space-x-2 mt-4">
+          <Input
+            type="text"
+            placeholder="Search bookings..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <Button type="submit" size="icon">
+            <Search className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>ID</TableHead>
+              <TableHead>Customer</TableHead>
+              <TableHead>Room Type</TableHead>
+              <TableHead>Persons</TableHead>
+              <TableHead>Check-in</TableHead>
+              <TableHead>Check-out</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredBookings.map((booking) => (
+              <TableRow key={booking.id}>
+                <TableCell>{booking.id}</TableCell>
+                <TableCell>{booking.customer_name}</TableCell>
+                <TableCell>{booking.room_type}</TableCell>
+                <TableCell>{booking.no_persons}</TableCell>
+                <TableCell>{booking.start_date}</TableCell>
+                <TableCell>{booking.end_date}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant={
+                      booking.status === "confirmed"
+                        ? "default"
+                        : booking.status === "pending"
+                          ? "secondary"
+                          : "destructive"
+                    }
+                  >
+                    {booking.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex space-x-2">
+                    <Button variant="ghost" size="icon" onClick={() => openEditDialog(booking)}>
+                      <Pencil className="h-4 w-4" />
+                      <span className="sr-only">Edit</span>
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDeleteBooking(booking.id)}>
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Delete</span>
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Booking</DialogTitle>
+              <DialogDescription>Update the details for this booking</DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleEditBooking)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="no_persons"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Number of Persons</FormLabel>
+                      <FormControl>
+                        <Input type="number" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="confirmed">Confirmed</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="start_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Check-in Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="end_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Check-out Date</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button type="submit">Update Booking</Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
+  )
+}
+

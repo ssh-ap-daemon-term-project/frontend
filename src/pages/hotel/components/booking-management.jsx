@@ -17,6 +17,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useForm } from "react-hook-form"
 import { Badge } from "@/components/ui/badge"
 import { Pencil, Trash2, Search } from "lucide-react"
+import { Popover, PopoverContent, PopoverTrigger } from "@radix-ui/react-popover"
+import { Calendar } from "@/components/ui/calendar"
+import { cn } from "@/lib/utils"
+import { format } from "date-fns"
+import { CalendarIcon } from "lucide-react"
 
 // Mock data for bookings
 const bookingsData = [
@@ -25,8 +30,8 @@ const bookingsData = [
     no_persons: 2,
     custfk: 101,
     roomfk: 1,
-    start_date: "2023-05-15",
-    end_date: "2023-05-20",
+    start_date: "2025-05-15",
+    end_date: "2025-05-20",
     customer_name: "John Doe",
     room_type: "Basic",
     status: "confirmed",
@@ -36,8 +41,8 @@ const bookingsData = [
     no_persons: 3,
     custfk: 102,
     roomfk: 2,
-    start_date: "2023-05-16",
-    end_date: "2023-05-18",
+    start_date: "2025-05-16",
+    end_date: "2025-05-18",
     customer_name: "Jane Smith",
     room_type: "Luxury",
     status: "pending",
@@ -47,8 +52,8 @@ const bookingsData = [
     no_persons: 2,
     custfk: 103,
     roomfk: 1,
-    start_date: "2023-05-17",
-    end_date: "2023-05-19",
+    start_date: "2025-05-17",
+    end_date: "2025-05-19",
     customer_name: "Robert Johnson",
     room_type: "Basic",
     status: "confirmed",
@@ -58,8 +63,8 @@ const bookingsData = [
     no_persons: 4,
     custfk: 104,
     roomfk: 3,
-    start_date: "2023-05-18",
-    end_date: "2023-05-22",
+    start_date: "2025-05-18",
+    end_date: "2025-05-22",
     customer_name: "Emily Davis",
     room_type: "Suite",
     status: "cancelled",
@@ -69,8 +74,8 @@ const bookingsData = [
     no_persons: 2,
     custfk: 105,
     roomfk: 2,
-    start_date: "2023-05-20",
-    end_date: "2023-05-25",
+    start_date: "2025-05-20",
+    end_date: "2025-05-25",
     customer_name: "Michael Wilson",
     room_type: "Luxury",
     status: "confirmed",
@@ -82,6 +87,10 @@ export default function BookingManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
+  const [searchRoomType, setSearchRoomType] = useState("")
+  const [searchStatus, setSearchStatus] = useState("")
+  const [searchCheckin, setSearchCheckin] = useState("")
+  const [searchCheckout, setSearchCheckout] = useState("")
 
   const form = useForm({
     defaultValues: {
@@ -127,9 +136,11 @@ export default function BookingManagement() {
 
   const filteredBookings = bookings.filter(
     (booking) =>
-      booking.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.room_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.status.toLowerCase().includes(searchTerm.toLowerCase()),
+      booking.customer_name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      booking.room_type.toLowerCase().includes(searchRoomType.toLowerCase()) &&
+      booking.status.toLowerCase().includes(searchStatus.toLowerCase()) &&
+      (!searchCheckin || new Date(booking.start_date) >= new Date(searchCheckin)) &&
+      (!searchCheckout || new Date(booking.end_date) <= new Date(searchCheckout))
   )
 
   return (
@@ -137,17 +148,80 @@ export default function BookingManagement() {
       <CardHeader>
         <CardTitle>Booking Management</CardTitle>
         <CardDescription>View and manage all room bookings</CardDescription>
-        <div className="flex w-full max-w-sm items-center space-x-2 mt-4">
-          <Input
-            type="text"
-            placeholder="Search bookings..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <Button type="submit" size="icon">
-            <Search className="h-4 w-4" />
-          </Button>
+        <div className="grid grid-cols-3 space-y-4 ml-2">
+          <div className="flex w-full max-w-sm items-center space-x-2 mt-4">
+            <Input
+              type="text"
+              placeholder="Search bookings..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <Button type="submit" size="icon">
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex w-full max-w-sm items-center space-x-2 mt-4">
+            <Input
+              type="text"
+              placeholder="Search room type..."
+              value={searchRoomType}
+              onChange={(e) => setSearchRoomType(e.target.value)}
+            />
+            <Button type="submit" size="icon">
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex w-full max-w-sm items-center space-x-2 mt-4 ">
+            <Input
+              type="text"
+              placeholder="Search status..."
+              value={searchStatus}
+              onChange={(e) => setSearchStatus(e.target.value)}
+            />
+            <Button type="submit" size="icon">
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
+
+        <div className="pt-4 gap-8 z-10 ml-2">
+
+          <div className="grid grid-cols-2 z-10 ml-2">
+            <div>Search Check-in</div>
+            <div>Search Check-out</div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-6 z-10 ml-2">
+            <div className="flex flex-row">
+              <input
+                className="border rounded"
+                style={{ width: "80%" }}
+                type="date"
+                value={searchCheckin}
+                onChange={(e) =>
+                  setSearchCheckin(e.target.value ? format(new Date(e.target.value), "yyyy-MM-dd") : ""
+                  )} />
+              <Button type="submit" size="icon">
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="flex flex-row">
+              <input
+                className="w-full  border rounded"
+                style={{ width: "80%" }}
+                type="date"
+                value={searchCheckout}
+                onChange={(e) =>
+                  setSearchCheckout(e.target.value ? format(new Date(e.target.value), "yyyy-MM-dd") : ""
+                  )} />
+              <Button type="submit" size="icon">
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
       </CardHeader>
       <CardContent>
         <Table>

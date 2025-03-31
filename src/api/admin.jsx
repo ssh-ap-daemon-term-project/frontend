@@ -1,14 +1,26 @@
 import axios from 'axios';
 
 const API = axios.create({
-    baseURL: 'http://127.0.0.1:8000/api',
-    withCredentials: true // allows HTTP-only cookies to be sent
+    baseURL: 'http://localhost:8000/api',
+    withCredentials: true
 });
 
-export const getAllCustomers = async () => {
-    return await API.get('/admin/customers');
+export const getAllHotels = async () => {
+    return await API.get('/admin/hotels');
 };
 
-export const deleteCustomer = async (id) => {
-    return await API.delete(`/admin/customer/${id}`);
+export const getHotelById = async (id) => {
+    return await API.get(`/admin/hotels/${id}`);
+};
+
+export const createHotel = async (hotelData) => {
+    return await API.post('/admin/hotels', hotelData);
+};
+
+export const updateHotel = async (id, hotelData) => {
+    return await API.put(`/admin/hotels/${id}`, hotelData);
+};
+
+export const deleteHotel = async (id) => {
+    return await API.delete(`/admin/hotels/${id}`);
 };

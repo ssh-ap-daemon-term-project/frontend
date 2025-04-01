@@ -39,13 +39,13 @@ const Auth = () => {
         try {
             const response = await signup(
                 formData.username,
+                formData.email,
+                formData.password,
+                formData.phone,
                 formData.name,
                 formData.dob,
                 formData.gender,
-                formData.email,
-                formData.phone,
-                formData.address,
-                formData.password
+                formData.address
             );
             console.log(response);
 
@@ -156,6 +156,15 @@ const Auth = () => {
                                 placeholder="Phone Number"
                                 required
                                 value={formData.phone}
+                                onChange={handleChange}
+                            />
+
+                            <input
+                                type="text"
+                                name="name"
+                                placeholder="Name"
+                                required
+                                value={formData.name}
                                 onChange={handleChange}
                             />
 

@@ -43,9 +43,12 @@ const Auth = () => {
                 formData.password,
                 formData.phone,
                 formData.name,
-                formData.dob,
-                formData.gender,
-                formData.address
+                formData.address,
+                "customer",
+                {
+                    dob: formData.dob,
+                    gender: formData.gender
+                }
             );
             console.log(response);
 

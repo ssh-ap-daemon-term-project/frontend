@@ -3,6 +3,7 @@ import RoomManagement from "./components/room-management"
 import BookingManagement from "./components/booking-management"
 import PriceManagement from "./components/price-management"
 import DashboardOverview from "./components/dashboard-overview"
+import ReviewsManagement from "./components/reviews-management"
 
 export const Metadata = {
   title: "Hotel Admin Dashboard",
@@ -22,6 +23,7 @@ export default function Hotelpage() {
             <TabsTrigger value="rooms">Rooms</TabsTrigger>
             <TabsTrigger value="bookings">Bookings</TabsTrigger>
             <TabsTrigger value="pricing">Pricing</TabsTrigger>
+            <TabsTrigger value="reviews">Reviews</TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="space-y-4">
             <DashboardOverview />
@@ -34,6 +36,9 @@ export default function Hotelpage() {
           </TabsContent>
           <TabsContent value="pricing" className="space-y-4">
             <PriceManagement />
+          </TabsContent>
+          <TabsContent value="reviews" className="space-y-4">
+            <ReviewsManagement />
           </TabsContent>
         </Tabs>
       </div>

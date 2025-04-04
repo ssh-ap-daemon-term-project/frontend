@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState  , useEffect , useContext} from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -18,6 +18,9 @@ import {
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { toast } from "react-toastify"
+import { getHotelReviews } from "@/api/hotel"
+import { AuthContext } from "@/context/AuthContext"
 
 // Mock data for reviews
 const reviewsData = [
@@ -81,13 +84,43 @@ const reviewsData = [
 ]
 
 export default function ReviewsManagement() {
-  const [reviews, setReviews] = useState(reviewsData)
+  const [reviews, setReviews] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedReview, setSelectedReview] = useState(null)
   const [isResponseDialogOpen, setIsResponseDialogOpen] = useState(false)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [responseText, setResponseText] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
+
+
+  const {userId} = useContext(AuthContext);
+
+
+  useEffect(() => {
+    async function fetchReviews() {
+      setIsLoading(true);
+      try {
+        const response = await getHotelReviews(userId);
+        
+        if (response.status === 200) {
+          setReviews(response.data);
+        } else {
+          // Fallback to mock data in development
+          console.error("Failed to load reviews from API");
+          toast.error("Failed to load reviews");
+        }
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+        toast.error("Error loading reviews");
+        // Keep using mock data on error
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  
+    fetchReviews();
+  }, [userId]);
 
   const handleResponseSubmit = () => {
     const updatedReviews = reviews.map((review) => {
@@ -160,17 +193,7 @@ export default function ReviewsManagement() {
               <Search className="h-4 w-4" />
             </Button>
           </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Reviews</SelectItem>
-              <SelectItem value="published">Published</SelectItem>
-              <SelectItem value="flagged">Flagged</SelectItem>
-              <SelectItem value="hidden">Hidden</SelectItem>
-            </SelectContent>
-          </Select>
+
         </div>
       </CardHeader>
       <CardContent>
@@ -182,8 +205,6 @@ export default function ReviewsManagement() {
               <TableHead>Rating</TableHead>
               <TableHead className="hidden md:table-cell">Comment</TableHead>
               <TableHead>Date</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -205,53 +226,6 @@ export default function ReviewsManagement() {
                   {review.comment.length > 50 ? `${review.comment.substring(0, 50)}...` : review.comment}
                 </TableCell>
                 <TableCell>{review.date}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      review.status === "published"
-                        ? "default"
-                        : review.status === "flagged"
-                          ? "destructive"
-                          : "secondary"
-                    }
-                  >
-                    {review.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Button variant="ghost" size="icon" onClick={() => openViewDialog(review)}>
-                      <MessageSquare className="h-4 w-4" />
-                      <span className="sr-only">View</span>
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => openResponseDialog(review)}>
-                      <MessageSquare className="h-4 w-4" />
-                      <span className="sr-only">Respond</span>
-                    </Button>
-                    {review.status !== "flagged" ? (
-                      <Button variant="ghost" size="icon" onClick={() => handleStatusChange(review.id, "flagged")}>
-                        <Flag className="h-4 w-4" />
-                        <span className="sr-only">Flag</span>
-                      </Button>
-                    ) : (
-                      <Button variant="ghost" size="icon" onClick={() => handleStatusChange(review.id, "published")}>
-                        <CheckCircle className="h-4 w-4" />
-                        <span className="sr-only">Publish</span>
-                      </Button>
-                    )}
-                    {review.status !== "hidden" ? (
-                      <Button variant="ghost" size="icon" onClick={() => handleStatusChange(review.id, "hidden")}>
-                        <XCircle className="h-4 w-4" />
-                        <span className="sr-only">Hide</span>
-                      </Button>
-                    ) : (
-                      <Button variant="ghost" size="icon" onClick={() => handleStatusChange(review.id, "published")}>
-                        <CheckCircle className="h-4 w-4" />
-                        <span className="sr-only">Publish</span>
-                      </Button>
-                    )}
-                  </div>
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>

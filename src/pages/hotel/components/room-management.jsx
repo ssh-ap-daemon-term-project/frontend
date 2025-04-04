@@ -539,10 +539,6 @@ export default function RoomManagement() {
       <CardContent>
 
         <Tabs defaultValue="overview">
-          <TabsList className="mb-4">
-            <TabsTrigger value="overview">Room Overview</TabsTrigger>
-            <TabsTrigger value="availability">Availability & Pricing</TabsTrigger>
-          </TabsList>
 
           <TabsContent value="overview">
             <Table>
@@ -596,63 +592,6 @@ export default function RoomManagement() {
                 ))}
               </TableBody>
             </Table>
-          </TabsContent>
-
-          <TabsContent value="availability">
-            <Accordion type="single" collapsible className="w-full">
-              {rooms.map((room) => (
-                <AccordionItem key={room.id} value={`room-${room.id}`}>
-                  <AccordionTrigger>
-                    {room.type} Rooms - {room.total_no} Total
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Date</TableHead>
-                            <TableHead>Available</TableHead>
-                            <TableHead>Booked</TableHead>
-                            <TableHead>Price</TableHead>
-                            <TableHead>Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {Array(60).fill().map((_, index) => (
-                            <TableRow key={index}>
-                              <TableCell>{getDateString(index)}</TableCell>
-                              <TableCell>{room.no_available[index]}</TableCell>
-                              <TableCell>{room.no_booked[index]}</TableCell>
-                              <TableCell>${room.price[index]}</TableCell>
-                              <TableCell>
-                                <div className="flex space-x-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => openEditPriceDialog(room, index)}
-                                  >
-                                    <DollarSign className="h-4 w-4 mr-1" />
-                                    Price
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => openEditAvailabilityDialog(room, index)}
-                                  >
-                                    <Calendar className="h-4 w-4 mr-1" />
-                                    Availability
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
           </TabsContent>
         </Tabs>
 

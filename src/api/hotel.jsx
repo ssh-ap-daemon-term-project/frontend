@@ -49,3 +49,11 @@ export const deleteRoom = async (roomId) => {
 export const updateRoomCount = async (roomId, totalNumber) => {
     return await API.patch(`/hotel/rooms/${roomId}`, { totalNumber: totalNumber });
 }
+
+export const getHotelBookings = async(userId) => {
+    return await API.get(`/hotel/hotel-bookings?user_id=${userId}`);
+}
+
+export const getHotelReviews = async (userId) => {
+    return await API.get(`/hotel/hotel-reviews?user_id=${userId}`);
+}

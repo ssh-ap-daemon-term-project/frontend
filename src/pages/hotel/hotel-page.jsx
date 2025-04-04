@@ -1,7 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import RoomManagement from "./components/room-management"
 import BookingManagement from "./components/booking-management"
-import PriceManagement from "./components/price-management"
 import DashboardOverview from "./components/dashboard-overview"
 import ReviewsManagement from "./components/reviews-management"
 
@@ -22,7 +21,6 @@ export default function Hotelpage() {
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="rooms">Rooms</TabsTrigger>
             <TabsTrigger value="bookings">Bookings</TabsTrigger>
-            <TabsTrigger value="pricing">Pricing</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
           </TabsList>
           <TabsContent value="overview" className="space-y-4">
@@ -33,9 +31,6 @@ export default function Hotelpage() {
           </TabsContent>
           <TabsContent value="bookings" className="space-y-4">
             <BookingManagement />
-          </TabsContent>
-          <TabsContent value="pricing" className="space-y-4">
-            <PriceManagement />
           </TabsContent>
           <TabsContent value="reviews" className="space-y-4">
             <ReviewsManagement />

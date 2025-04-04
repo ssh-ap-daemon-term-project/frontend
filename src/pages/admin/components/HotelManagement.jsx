@@ -30,8 +30,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Pencil, Trash2, Plus, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { getAllHotels, createHotel, updateHotel, deleteHotel } from "@/api/admin";
+import { signup } from "@/api/auth";
 import { toast } from "react-toastify";
 
 const HotelManagement = () => {
@@ -43,11 +45,16 @@ const HotelManagement = () => {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [currentHotel, setCurrentHotel] = useState(null);
     const [formData, setFormData] = useState({
+        username: "",
+        email: "",
+        password: "",
+        phone: "",
         name: "",
         address: "",
         city: "",
-        email: "",
-        phone: "",
+        latitude: 0.0,
+        longitude: 0.0,
+        rating: 0.0,
         description: "",
     });
 
@@ -80,7 +87,22 @@ const HotelManagement = () => {
     const handleCreateHotel = async () => {
         try {
             setIsLoading(true);
-            await createHotel(formData);
+            await signup(
+                formData.username,
+                formData.email,
+                formData.password,
+                formData.phone,
+                formData.name,
+                formData.address,
+                "hotel",
+                {
+                    city: formData.city,
+                    latitude: formData.latitude,
+                    longitude: formData.longitude,
+                    rating: formData.rating,
+                    description: formData.description,
+                }
+            );
             setShowCreateDialog(false);
             fetchHotels();
             resetForm();
@@ -89,11 +111,7 @@ const HotelManagement = () => {
                 description: "The hotel has been created successfully."
             });
         } catch (error) {
-            toast({
-                variant: "destructive",
-                title: "Error creating hotel",
-                description: error.message || "Could not create hotel. Please try again."
-            });
+            toast.error(error.response.data.detail || "Could not create hotel. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -111,11 +129,7 @@ const HotelManagement = () => {
                 description: "The hotel has been updated successfully."
             });
         } catch (error) {
-            toast({
-                variant: "destructive",
-                title: "Error updating hotel",
-                description: error.message || "Could not update hotel. Please try again."
-            });
+            toast.error(error.response.data.detail || "Could not update hotel. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -162,11 +176,16 @@ const HotelManagement = () => {
 
     const resetForm = () => {
         setFormData({
+            username: "",
+            email: "",
+            password: "",
+            phone: "",
             name: "",
             address: "",
             city: "",
-            email: "",
-            phone: "",
+            latitude: 0.0,
+            longitude: 0.0,
+            rating: 0.0,
             description: "",
         });
         setCurrentHotel(null);
@@ -263,7 +282,7 @@ const HotelManagement = () => {
 
             {/* Create Hotel Dialog */}
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[500px]" style={{ maxHeight: "90vh", overflowY: "auto" }}>
                     <DialogHeader>
                         <DialogTitle>Add New Hotel</DialogTitle>
                         <DialogDescription>
@@ -286,7 +305,7 @@ const HotelManagement = () => {
 
             {/* Edit Hotel Dialog */}
             <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-                <DialogContent className="sm:max-w-[500px]">
+                <DialogContent className="sm:max-w-[500px]" style={{ maxHeight: "90vh", overflowY: "auto" }}>
                     <DialogHeader>
                         <DialogTitle>Edit Hotel</DialogTitle>
                         <DialogDescription>
@@ -336,6 +355,29 @@ const HotelManagement = () => {
 const HotelForm = ({ formData, handleChange }) => {
     return (
         <>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                        id="username"
+                        name="username"
+                        value={formData.username}
+                        onChange={handleChange}
+                        required
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                        id="password"
+                        name="password"
+                        type="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                    />
+                </div>
+            </div>
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="name">Hotel Name</Label>
@@ -391,14 +433,46 @@ const HotelForm = ({ formData, handleChange }) => {
                     />
                 </div>
             </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="longitude">Longitude</Label>
+                    <Input
+                        id="longitude"
+                        name="longitude"
+                        value={formData.longitude}
+                        onChange={handleChange}
+                        required
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="latitude">Latitude</Label>
+                    <Input
+                        id="latitude"
+                        name="latitude"
+                        value={formData.latitude}
+                        onChange={handleChange}
+                        required
+                    />
+                </div>
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="rating">Rating</Label>
+                <Input
+                    id="rating"
+                    name="rating"
+                    value={formData.rating}
+                    onChange={handleChange}
+                    required
+                />
+            </div>
             <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
-                <Input
+                <Textarea
                     id="description"
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
-                    className="h-20"
+                    required
                 />
             </div>
         </>

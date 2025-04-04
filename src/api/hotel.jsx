@@ -32,3 +32,20 @@ export const getRoomTypeDistribution = async () => {
 export const getRecentBookings = async () => {
     return await API.get('/hotel/recent-bookings');
 }
+
+export const getRoomOverview = async (userId) => {
+    return await API.get(`/hotel/room-overview?user_id=${userId}`);
+}
+
+export const addRoom = async (roomData) => {
+    return await API.post('/hotel/add-room', roomData);
+}
+
+export const deleteRoom = async (roomId) => {
+    return await API.delete(`/hotel/delete-room/${roomId}`);
+}
+
+// Add this function to update room count
+export const updateRoomCount = async (roomId, totalNumber) => {
+    return await API.patch(`/hotel/rooms/${roomId}`, { totalNumber: totalNumber });
+}

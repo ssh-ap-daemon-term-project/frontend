@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
@@ -15,7 +13,7 @@ import {
 } from "@/components/ui/dialog"
 import { format } from "date-fns"
 import { CalendarIcon, MapPinIcon, UsersIcon, AlertTriangleIcon } from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "react-toastify"
 
 // Mock data for bookings
 const mockBookings = [

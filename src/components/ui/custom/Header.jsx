@@ -31,7 +31,13 @@ export default function DashboardHeader() {
           {userType === 'hotel' &&
             <Link to="/hotel">Dashboard</Link>
           }
-          {isAuthenticated && <DropdownMenu>
+          {userType === 'customer' &&
+            <Link to="/customer">Dashboard</Link>
+          }
+          {userType === 'driver' &&
+            <Link to="/driver">Dashboard</Link>
+          }
+          {isAuthenticated && userType == 'hotel' && <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">

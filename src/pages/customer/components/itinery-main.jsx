@@ -1,7 +1,5 @@
-"use client"
-
 import { useState } from "react"
-import Link from "next/link"
+import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -27,7 +25,7 @@ import {
   PencilIcon,
   TrashIcon,
 } from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "react-toastify"
 
 // Mock data for itineraries
 const mockItineraries = [

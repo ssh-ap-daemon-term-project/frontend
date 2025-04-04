@@ -1,9 +1,8 @@
-"use client"
-
-import Link from "next/link"
+import { Link } from "react-router-dom"
 
 import { useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useNavigate } from "react-router-dom"
+import { useParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -23,7 +22,7 @@ import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { StarIcon, MapPinIcon, CheckIcon, CreditCardIcon, UsersIcon } from "lucide-react"
 import { format, addDays } from "date-fns"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "react-toastify"
 
 // Mock data for hotel details
 const mockHotelDetails = {
@@ -188,9 +187,8 @@ const mockItineraries = [
 ]
 
 export default function HotelDetailPage() {
-  const params = useParams()
-  const router = useRouter()
-  const hotelId = params.id
+  const navigate = useNavigate()
+  const { hotelId } = useParams()
 
   // In a real app, you would fetch the hotel data based on the ID
   const hotel = mockHotelDetails
@@ -236,7 +234,7 @@ export default function HotelDetailPage() {
     // Redirect to bookings page
     // In a real app, you would redirect to a booking confirmation page
     setTimeout(() => {
-      router.push("/bookings")
+      navigate("/customer/bookings")
     }, 2000)
   }
 

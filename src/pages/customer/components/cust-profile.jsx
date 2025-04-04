@@ -1,7 +1,4 @@
-"use client"
-
 import { Badge } from "@/components/ui/badge"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Separator } from "@/components/ui/separator"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "react-toastify"
 import { CalendarIcon, CreditCardIcon, UserIcon, LockIcon, LogOutIcon } from "lucide-react"
 
 // Mock user data

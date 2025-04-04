@@ -1,5 +1,5 @@
 
-import { useState } from "react"
+import { useState  , useEffect , useContext} from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -22,6 +22,8 @@ import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { CalendarIcon } from "lucide-react"
+import { AuthContext } from "@/context/AuthContext"
+import { getHotelBookings } from "@/api/hotel"
 
 // Mock data for bookings
 const bookingsData = [
@@ -83,7 +85,8 @@ const bookingsData = [
 ]
 
 export default function BookingManagement() {
-  const [bookings, setBookings] = useState(bookingsData)
+  const [bookings, setBookings] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
@@ -91,6 +94,33 @@ export default function BookingManagement() {
   const [searchStatus, setSearchStatus] = useState("")
   const [searchCheckin, setSearchCheckin] = useState("")
   const [searchCheckout, setSearchCheckout] = useState("")
+
+
+  const { userId } = useContext(AuthContext);
+
+
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true);
+      try {
+        const response = await getHotelBookings(userId);
+        if (response.status === 200) {
+          setBookings(response.data);
+        } else {
+          // Fallback to mock data in development
+          setBookings([]);
+        }
+      } catch (error) {
+        console.error("Error fetching bookings:", error);
+        setBookings([]); // Use mock data on error
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
+
 
   const form = useForm({
     defaultValues: {
@@ -233,8 +263,6 @@ export default function BookingManagement() {
               <TableHead>Persons</TableHead>
               <TableHead>Check-in</TableHead>
               <TableHead>Check-out</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -246,31 +274,6 @@ export default function BookingManagement() {
                 <TableCell>{booking.no_persons}</TableCell>
                 <TableCell>{booking.start_date}</TableCell>
                 <TableCell>{booking.end_date}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={
-                      booking.status === "confirmed"
-                        ? "default"
-                        : booking.status === "pending"
-                          ? "secondary"
-                          : "destructive"
-                    }
-                  >
-                    {booking.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Button variant="ghost" size="icon" onClick={() => openEditDialog(booking)}>
-                      <Pencil className="h-4 w-4" />
-                      <span className="sr-only">Edit</span>
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDeleteBooking(booking.id)}>
-                      <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">Delete</span>
-                    </Button>
-                  </div>
-                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -293,28 +296,6 @@ export default function BookingManagement() {
                       <FormControl>
                         <Input type="number" {...field} />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="status"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="confirmed">Confirmed</SelectItem>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

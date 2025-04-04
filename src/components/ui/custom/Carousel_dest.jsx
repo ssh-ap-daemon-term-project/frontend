@@ -118,7 +118,8 @@ function Slide({ slide, offset }) {
             <div
                 className={styles.slideContent}
                 style={{
-                    backgroundImage: `url('${slide.image}')`
+                    backgroundImage: `url('${slide.image}')`,
+                    "--notCentered": offset === 0 ? 0 : 1
                 }}
             >
                 <div className={styles.slideContentInner}>

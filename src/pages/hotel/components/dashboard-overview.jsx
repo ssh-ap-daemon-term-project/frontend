@@ -84,7 +84,7 @@ export default function DashboardOverview() {
     async function fetchData() {
       try {
         // Write the function to fetch data for the API hotel.jsx
-        const response = await hotelRevenue();
+        const response = await hotelActiveBookings();
         if (!response.ok) {
           setActiveBooking(0);
         }

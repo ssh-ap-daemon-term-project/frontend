@@ -13,9 +13,20 @@ import { Link } from "react-router-dom"
 import { AuthContext } from "@/context/AuthContext"
 import { useContext } from "react"
 import { useNavigate } from "react-router-dom"
+import { signout } from "../../../api/auth"
 
 export default function DashboardHeader() {
   const { isAuthenticated, userType, contextSignout } = useContext(AuthContext);
+
+  const handleSignout = async () => {
+    try {
+      await signout();
+      contextSignout();
+      navigate("/");
+    } catch (error) {
+      console.error(error);
+    }
+  }
   const navigate = useNavigate();
   return (
     <header className="sticky shadow-sm px-3 top-0 z-40 border-b bg-background">
@@ -56,7 +67,7 @@ export default function DashboardHeader() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate("/hotel/profile")}>Profile</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={contextSignout}>Sign out</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignout}>Sign out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           }

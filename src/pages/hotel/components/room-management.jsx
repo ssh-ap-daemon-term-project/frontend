@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useContext } from "react"
+import { AuthContext } from "@/context/AuthContext"
+import { toast } from "react-toastify"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -56,7 +58,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { useForm } from "react-hook-form"
-import { PlusIcon, Pencil, Calendar, DollarSign,Trash2 } from 'lucide-react'
+import { PlusIcon, Pencil, Calendar, DollarSign, Trash2 } from 'lucide-react'
 import { format, addDays, set } from "date-fns"
 import {
   Accordion,
@@ -70,6 +72,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
+import { getRoomOverview, addRoom, deleteRoom, updateRoomCount } from "@/api/hotel"
 
 // Mock data for rooms
 const roomsData = [
@@ -106,7 +109,7 @@ const roomsData = [
 ]
 
 export default function RoomManagement() {
-  const [rooms, setRooms] = useState(roomsData)
+  const [rooms, setRooms] = useState([])
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [selectedRoom, setSelectedRoom] = useState(null)
   const [selectedDay, setSelectedDay] = useState(0)
@@ -147,57 +150,166 @@ export default function RoomManagement() {
     },
   })
 
-  const handleAddRoom = (data) => {
-    const basePrice = parseInt(data.base_price)
-    const totalRooms = parseInt(data.total_no)
-    
-    const newRoom = {
-      id: rooms.length + 1,
-      total_no: totalRooms,
-      type: data.type,
-      room_capacity: parseInt(data.room_capacity),
-      no_booked: Array(60).fill(0),
-      no_available: Array(60).fill(totalRooms),
-      price: Array(60).fill(basePrice),
-      hotelfk: 1,
-    }
-    setRooms([...rooms, newRoom])
-    setIsAddDialogOpen(false)
-    addRoomForm.reset()
-  }
+  const { userId } = useContext(AuthContext);
 
-  const handleEditRoom = (data) => {
-    const updatedRooms = rooms.map((room) => {
-      if (room.id === selectedRoom.id) {
-        return {
-          ...room,
-          total_no: Number.parseInt(data.total_no),
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        // Write the function to fetch data for the API hotel.jsx
+        const response = await getRoomOverview(userId);
+        console.log("Response:", response)
+        if (response.status === 200) {
+          setRooms(response.data);// To be changed
+        }
+        else {
+          setRooms([]);// To be changed
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast.error("Error fetching data");
+      }
+    }
+
+    fetchData();
+  }, []);
+
+
+  const handleAddRoom = async (data) => {
+    try {
+      // Call API to add room
+      const response = await addRoom({
+        totalNumber: data.total_no,
+        type: data.type,
+        roomCapacity: data.room_capacity,
+        basePrice: data.base_price,
+        hotelId: 1, // Replace with actual hotel ID if needed
+      });
+
+      console.log("Add room response:", response);
+
+      if (response.status === 200) {
+        // On success, add the room to the local state
+        const basePrice = parseInt(data.base_price);
+        const totalRooms = parseInt(data.total_no);
+
+        const newRoom = {
+          id: response.data.id, // Use ID from response
+          total_no: totalRooms,
           type: data.type,
-          room_capacity: Number.parseInt(data.room_capacity),
-          price: Array(60).fill(Number.parseInt(data.base_price)),
+          room_capacity: parseInt(data.room_capacity),
+          no_booked: Array(60).fill(0),
+          no_available: Array(60).fill(totalRooms),
+          price: Array(60).fill(basePrice),
+          hotelfk: 1, // Replace with actual hotel ID if needed
+        };
+
+        setRooms([...rooms, newRoom]);
+        toast.success("Room added successfully");
+      } else {
+        // Handle specific error case for duplicate room type
+        if (response.status === 403) {
+          toast.error(`Room type ${data.type} already exists`);
+        } else {
+          toast.error(response.error || "Failed to add room");
         }
       }
-      return room
-    })
-    setRooms(updatedRooms)
-    setIsEditDialogOpen(false)
-    setSelectedRoom(null)
-    form.reset()
+    } catch (error) {
+      console.error("Error in handleAddRoom:", error);
+      toast.error("Error adding room");
+    } finally {
+      // Close dialog and reset form regardless of outcome
+      setIsAddDialogOpen(false);
+      addRoomForm.reset();
+    }
+  };
+
+
+
+  // Replace your current handleEditRoom function with this
+  const handleEditRoom = async (data) => {
+    try {
+      // Parse the increment value (can be positive or negative)
+      const incrementValue = Number.parseInt(data.total_no)
+
+      // Calculate new total (don't allow it to go below 0)
+      const newTotal = Math.max(0, selectedRoom.total_no + incrementValue)
+
+      // Call API to update the backend
+      const response = await updateRoomCount(selectedRoom.id, newTotal);
+
+      if (response.status === 200) {
+        // On success, update the UI
+        const updatedRooms = rooms.map((room) => {
+          if (room.id === selectedRoom.id) {
+            // Update the total room count
+            const updatedRoom = { ...room, total_no: newTotal }
+
+            // Also update availability for future dates
+            updatedRoom.no_available = room.no_available.map((available, index) => {
+              // Calculate new availability (current + increment)
+              // But don't go below the number of booked rooms
+              return Math.max(room.no_booked[index], available + incrementValue)
+            })
+
+            return updatedRoom
+          }
+          return room
+        })
+
+        // Update the UI
+        setRooms(updatedRooms)
+        toast.success(`Updated room count: ${incrementValue >= 0 ? 'added' : 'removed'} ${Math.abs(incrementValue)} rooms`)
+      } else {
+        toast.error("Failed to update room in database")
+      }
+    } catch (error) {
+      console.error("Error updating room:", error)
+      toast.error("Error updating room count")
+    } finally {
+      setIsEditDialogOpen(false)
+      setSelectedRoom(null)
+      form.reset()
+    }
   }
 
-  const handleDeleteRoom = (id) => {
-    const updatedRooms = rooms.filter((room) => room.id !== id)
-    setRooms(updatedRooms)
-  }
+  const handleDeleteRoom = async (id) => {
+    try {
+      // Call API to delete room
+      const response = await deleteRoom(id);
+
+      if (response.status === 200) {
+        // On success, update UI by removing the deleted room
+        const updatedRooms = rooms.filter((room) => room.id !== id);
+        setRooms(updatedRooms);
+        toast.success("Room deleted successfully");
+        setopen(false); // Close the confirmation dialog
+      } else {
+        // Handle specific error cases
+        if (response.status === 404) {
+          toast.error("Room not found");
+        } else if (response.status === 403) {
+          toast.error("You don't have permission to delete this room");
+        } else if (response.status === 409) {
+          toast.error("Cannot delete room with active bookings");
+        } else {
+          toast.error(response.error || "Failed to delete room");
+        }
+      }
+    } catch (error) {
+      console.error("Error in handleDeleteRoom:", error);
+      toast.error("Error deleting room");
+    }
+  };
 
   const handleEditPrice = (data) => {
     const newPrice = parseInt(data.price)
     const applyRange = data.apply_range
-    
+
     setRooms(rooms.map(room => {
       if (room.id === selectedRoom.id) {
         const newPrices = [...room.price]
-        
+
         if (applyRange === "single") {
           newPrices[selectedDay] = newPrice
         } else if (applyRange === "week") {
@@ -217,12 +329,12 @@ export default function RoomManagement() {
             newPrices[i] = newPrice
           }
         }
-        
+
         return { ...room, price: newPrices }
       }
       return room
     }))
-    
+
     setIsEditPriceDialogOpen(false)
     editPriceForm.reset()
   }
@@ -230,11 +342,11 @@ export default function RoomManagement() {
   const handleEditAvailability = (data) => {
     const newAvailable = parseInt(data.available)
     const applyRange = data.apply_range
-    
+
     setRooms(rooms.map(room => {
       if (room.id === selectedRoom.id) {
         const newAvailability = [...room.no_available]
-        
+
         if (applyRange === "single") {
           // Ensure we don't set availability below booked rooms
           if (newAvailable >= room.no_booked[selectedDay]) {
@@ -259,12 +371,12 @@ export default function RoomManagement() {
             }
           }
         }
-        
+
         return { ...room, no_available: newAvailability }
       }
       return room
     }))
-    
+
     setIsEditAvailabilityDialogOpen(false)
     editAvailabilityForm.reset()
   }
@@ -285,10 +397,7 @@ export default function RoomManagement() {
 
   const openEditDialog = (room) => {
     setSelectedRoom(room)
-    form.setValue("total_no", room.total_no.toString())
-    form.setValue("type", room.type)
-    form.setValue("room_capacity", room.room_capacity.toString())
-    form.setValue("base_price", room.price[0].toString())
+    form.setValue("total_no", "0")
     setIsEditDialogOpen(true)
   }
 
@@ -351,9 +460,10 @@ export default function RoomManagement() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Basic">Basic</SelectItem>
-                          <SelectItem value="Luxury">Luxury</SelectItem>
-                          <SelectItem value="Suite">Suite</SelectItem>
+                          <SelectItem value="basic">Basic</SelectItem>
+                          <SelectItem value="luxury">Luxury</SelectItem>
+                          <SelectItem value="suite">Suite</SelectItem>
+                          <SelectItem value="deluxe">Deluxe</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -410,59 +520,10 @@ export default function RoomManagement() {
                   name="total_no"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Total Number of Rooms</FormLabel>
+                      <FormLabel>Increment By</FormLabel>
                       <FormControl>
                         <Input type="number" {...field} />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Room Type</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Basic">Basic</SelectItem>
-                          <SelectItem value="Luxury">Luxury</SelectItem>
-                          <SelectItem value="Suite">Suite</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="room_capacity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Room Capacity</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="base_price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Base Price</FormLabel>
-                      <FormControl>
-                        <Input type="number" {...field} />
-                      </FormControl>
-                      <FormDescription>Base price per night in USD</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -482,7 +543,7 @@ export default function RoomManagement() {
             <TabsTrigger value="overview">Room Overview</TabsTrigger>
             <TabsTrigger value="availability">Availability & Pricing</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="overview">
             <Table>
               <TableHeader>
@@ -506,37 +567,37 @@ export default function RoomManagement() {
                     <TableCell>{room.no_available[0]}</TableCell>
                     <TableCell>${room.price[0]}</TableCell>
                     <TableCell>
-                  <div className="flex space-x-2">
-                    <Button variant="ghost" size="icon" onClick={() => openEditDialog(room)}>
-                      <Pencil className="h-4 w-4" />
-                      <span className="sr-only">Edit</span>
-                    </Button>
-                    <AlertDialog open = {open} onOpenChange={setopen}>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete your data from our servers.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setopen(false)}>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteRoom(room.id)}>Delete</AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    <Button variant="ghost" size="icon" onClick={() => setopen(true)}>
-                      <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">Delete</span>
-                    </Button>
-                  </div>
-                </TableCell>
+                      <div className="flex space-x-2">
+                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(room)}>
+                          <Pencil className="h-4 w-4" />
+                          <span className="sr-only">Edit</span>
+                        </Button>
+                        <AlertDialog open={open} onOpenChange={setopen}>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete your data from our servers.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel onClick={() => setopen(false)}>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteRoom(room.id)}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                        <Button variant="ghost" size="icon" onClick={() => setopen(true)}>
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Delete</span>
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </TabsContent>
-          
+
           <TabsContent value="availability">
             <Accordion type="single" collapsible className="w-full">
               {rooms.map((room) => (

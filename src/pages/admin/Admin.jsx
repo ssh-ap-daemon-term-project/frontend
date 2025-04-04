@@ -1,5 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import HotelManagement from "./components/HotelManagement"
+import CustomerManagement from "./components/CustomerManagement"
 import DashboardOverview from "./components/DashboardOverview"
 
 export const Metadata = {
@@ -18,12 +19,16 @@ export default function Admin() {
                     <TabsList>
                         <TabsTrigger value="overview">Overview</TabsTrigger>
                         <TabsTrigger value="hotels">Hotels</TabsTrigger>
+                        <TabsTrigger value="customers">Customers</TabsTrigger>
                     </TabsList>
                     <TabsContent value="overview" className="space-y-4">
                         <DashboardOverview />
                     </TabsContent>
                     <TabsContent value="hotels" className="space-y-4">
                         <HotelManagement />
+                    </TabsContent>
+                    <TabsContent value="customers" className="space-y-4">
+                        <CustomerManagement />
                     </TabsContent>
                 </Tabs>
             </div>

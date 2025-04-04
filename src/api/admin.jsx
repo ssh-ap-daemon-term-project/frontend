@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-    baseURL: 'http://localhost:8000/api',
+    baseURL: 'http://127.0.0.1:8000/api',
     withCredentials: true
 });
 
@@ -23,4 +23,20 @@ export const updateHotel = async (id, hotelData) => {
 
 export const deleteHotel = async (id) => {
     return await API.delete(`/admin/hotels/${id}`);
+};
+
+export const getAllCustomers = async () => {
+    return await API.get('/admin/customers');
+};
+
+export const getCustomerById = async (id) => {
+    return await API.get(`/admin/customers/${id}`);
+};
+
+export const updateCustomer = async (id, customerData) => {
+    return await API.put(`/admin/customers/${id}`, customerData);
+};
+
+export const deleteCustomer = async (id) => {
+    return await API.delete(`/admin/customer/${id}`);
 };

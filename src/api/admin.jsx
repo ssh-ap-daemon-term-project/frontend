@@ -13,8 +13,12 @@ export const getHotelById = async (id) => {
     return await API.get(`/admin/hotels/${id}`);
 };
 
-export const createHotel = async (hotelData) => {
-    return await API.post('/admin/hotels', hotelData);
+export const getHotelRooms = async (hotelId) => {
+    return await API.get(`/admin/hotels/${hotelId}/rooms`);
+};
+
+export const getHotelReviews = async (hotelId) => {
+    return await API.get(`/admin/hotels/${hotelId}/reviews`);
 };
 
 export const updateHotel = async (id, hotelData) => {
@@ -41,6 +45,22 @@ export const deleteCustomer = async (id) => {
     return await API.delete(`/admin/customer/${id}`);
 };
 
+export const getCustomerBookings = async (customerId) => {
+    return await API.get(`/admin/customers/${customerId}/bookings`);
+};
+
+export const getCustomerRideBookings = async (customerId) => {
+    return await API.get(`/admin/customers/${customerId}/ride-bookings`);
+};
+
+export const getCustomerReviews = async (customerId) => {
+    return await API.get(`/admin/customers/${customerId}/reviews`);
+};
+
+export const getCustomerItineraries = async (customerId) => {
+    return await API.get(`/admin/customers/${customerId}/itineraries`);
+};
+
 export const getDashboardData = async () => {
     return await API.get('/admin/dashboard-data');
 }
@@ -60,3 +80,11 @@ export const updateDriver = async (id, driverData) => {
 export const deleteDriver = async (id) => {
     return await API.delete(`/admin/drivers/${id}`);
 }
+
+export const getDriverRideBookings = async (driverId) => {
+    return await API.get(`/admin/drivers/${driverId}/ride-bookings`);
+};
+
+export const getAllRoomBookings = async () => {
+    return await API.get('/admin/bookings/rooms');
+};

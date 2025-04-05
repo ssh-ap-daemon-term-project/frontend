@@ -3,6 +3,7 @@ import HotelManagement from "./components/HotelManagement"
 import CustomerManagement from "./components/CustomerManagement"
 import DashboardOverview from "./components/DashboardOverview"
 import DriverManagement from "./components/DriverManagement"
+import RoomBookingsManagement from "./components/RoomBookingsManagement"
 
 export const Metadata = {
     title: "Admin Dashboard",
@@ -22,6 +23,7 @@ export default function Admin() {
                         <TabsTrigger value="drivers">Driver</TabsTrigger>
                         <TabsTrigger value="hotels">Hotels</TabsTrigger>
                         <TabsTrigger value="customers">Customers</TabsTrigger>
+                        <TabsTrigger value="bookings">Room Bookings</TabsTrigger>
                     </TabsList>
                     <TabsContent value="overview" className="space-y-4">
                         <DashboardOverview />
@@ -34,6 +36,9 @@ export default function Admin() {
                     </TabsContent>
                     <TabsContent value="customers" className="space-y-4">
                         <CustomerManagement />
+                    </TabsContent>
+                    <TabsContent value="bookings" className="space-y-4">
+                        <RoomBookingsManagement />
                     </TabsContent>
                 </Tabs>
             </div>

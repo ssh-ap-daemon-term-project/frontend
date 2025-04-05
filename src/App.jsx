@@ -5,7 +5,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import Navbar from './components/navbar/Navbar';
 import Auth from './pages/auth/Auth';
 import AdminDashboard from './pages/admin/Admin';
-import AdminCustomer from './pages/admin/customer/Customer';
 import PWABadge from './PWABadge';
 import Hero from './components/ui/custom/Hero';
 import Header from './components/ui/custom/Header';

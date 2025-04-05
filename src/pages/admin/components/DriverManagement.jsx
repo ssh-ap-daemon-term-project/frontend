@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Car, Search, Plus, Trash2, Edit, Check, X } from "lucide-react"
-import { toast } from "react-toastify" // Keep this import as it's working
+import { Car, Search, Plus, Trash2, Edit, Check, X, ChevronDown, ChevronRight, User, Calendar, MapPin } from "lucide-react"
+import { toast } from "react-toastify"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -23,12 +23,13 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-import { getDrivers, addDriver, updateDriver, deleteDriver } from "@/api/admin"
+import { getDrivers, addDriver, updateDriver, deleteDriver, getDriverRideBookings } from "@/api/admin"
+import { format } from "date-fns"
 
 const DriverManagement = () => {
     const [drivers, setDrivers] = useState([])
@@ -40,6 +41,9 @@ const DriverManagement = () => {
     const [editDialogOpen, setEditDialogOpen] = useState(false)
     const [driverToEdit, setDriverToEdit] = useState(null)
     const [addDialogOpen, setAddDialogOpen] = useState(false)
+    const [expandedDriverId, setExpandedDriverId] = useState(null)
+    const [expandedDriverDetails, setExpandedDriverDetails] = useState(null)
+    const [isLoadingDetails, setIsLoadingDetails] = useState(false)
     const [newDriver, setNewDriver] = useState({
         name: "",
         email: "",
@@ -84,12 +88,37 @@ const DriverManagement = () => {
         } catch (error) {
             console.error("Error fetching drivers:", error)
             toast.error("Failed to load drivers")
-            
-            // Fallback to mock data if API fails
-            setDrivers([
-            ])
         } finally {
             setIsLoading(false)
+        }
+    }
+
+    const toggleExpandDriver = async (driverId) => {
+        if (expandedDriverId === driverId) {
+            setExpandedDriverId(null)
+            setExpandedDriverDetails(null)
+            return
+        }
+
+        setExpandedDriverId(driverId)
+        setIsLoadingDetails(true)
+
+        try {
+            // Find the current driver
+            const driver = drivers.find(d => d.id === driverId)
+            
+            // Fetch ride bookings
+            const rideBookingsResponse = await getDriverRideBookings(driverId)
+
+            setExpandedDriverDetails({
+                driver: driver,
+                rideBookings: rideBookingsResponse.data
+            })
+        } catch (error) {
+            toast.error("Failed to fetch driver details")
+            setExpandedDriverId(null)
+        } finally {
+            setIsLoadingDetails(false)
         }
     }
 
@@ -156,6 +185,22 @@ const DriverManagement = () => {
         }
     }
 
+    // Render a badge for ride status
+    const RideStatusBadge = ({ status }) => {
+        switch (status) {
+            case 'confirmed':
+                return <Badge className="bg-green-500">Confirmed</Badge>;
+            case 'pending':
+                return <Badge variant="outline" className="text-yellow-600 border-yellow-600">Pending</Badge>;
+            case 'completed':
+                return <Badge variant="secondary">Completed</Badge>;
+            case 'cancelled':
+                return <Badge variant="destructive">Cancelled</Badge>;
+            default:
+                return <Badge variant="outline">{status}</Badge>;
+        }
+    }
+
     return (
         <div className="flex flex-col gap-5">
             <div className="flex items-center justify-between">
@@ -187,6 +232,7 @@ const DriverManagement = () => {
                         <Table>
                             <TableHeader>
                                 <TableRow>
+                                    <TableHead className="w-10"></TableHead>
                                     <TableHead>Name</TableHead>
                                     <TableHead>Car Details</TableHead>
                                     <TableHead>Contact</TableHead>
@@ -199,49 +245,237 @@ const DriverManagement = () => {
                             <TableBody>
                                 {filteredDrivers.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-6">
+                                        <TableCell colSpan={8} className="text-center py-6">
                                             No drivers found
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     filteredDrivers.map((driver) => (
-                                        <TableRow key={driver.id}>
-                                            <TableCell className="font-medium">
-                                                {driver.name}
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col">
-                                                    <span>{driver.carModel}</span>
-                                                    <span className="text-xs text-muted-foreground">
-                                                        {driver.carNumber} • {driver.carType} • {driver.seatingCapacity} seats
-                                                    </span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <div className="flex flex-col">
-                                                    <span>{driver.email}</span>
-                                                    <span className="text-xs text-muted-foreground">{driver.phone}</span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <StatusBadge status={driver.status} />
-                                            </TableCell>
-                                            <TableCell>{driver.joinedDate}</TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center">
-                                                    {driver.rating}
-                                                    <span className="ml-1 text-yellow-500">★</span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <Button variant="ghost" size="icon" onClick={() => handleEditClick(driver)}>
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
-                                                <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(driver)}>
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </TableCell>
-                                        </TableRow>
+                                        <>
+                                            <TableRow key={driver.id}>
+                                                <TableCell>
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon" 
+                                                        onClick={() => toggleExpandDriver(driver.id)}
+                                                        aria-label={expandedDriverId === driver.id ? "Collapse details" : "Expand details"}
+                                                    >
+                                                        {expandedDriverId === driver.id ? (
+                                                            <ChevronDown className="h-4 w-4" />
+                                                        ) : (
+                                                            <ChevronRight className="h-4 w-4" />
+                                                        )}
+                                                    </Button>
+                                                </TableCell>
+                                                <TableCell className="font-medium">
+                                                    {driver.name}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col">
+                                                        <span>{driver.carModel}</span>
+                                                        <span className="text-xs text-muted-foreground">
+                                                            {driver.carNumber} • {driver.carType} • {driver.seatingCapacity} seats
+                                                        </span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-col">
+                                                        <span>{driver.email}</span>
+                                                        <span className="text-xs text-muted-foreground">{driver.phone}</span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <StatusBadge status={driver.status} />
+                                                </TableCell>
+                                                <TableCell>{driver.joinedDate}</TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center">
+                                                        {driver.rating || "N/A"}
+                                                        {driver.rating && <span className="ml-1 text-yellow-500">★</span>}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="ghost" size="icon" onClick={() => handleEditClick(driver)}>
+                                                        <Edit className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(driver)}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                            {expandedDriverId === driver.id && (
+                                                <TableRow>
+                                                    <TableCell colSpan={8} className="p-0">
+                                                        {isLoadingDetails ? (
+                                                            <div className="flex justify-center items-center py-8">
+                                                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="bg-muted/20 px-10 py-6">
+                                                                <Tabs defaultValue="details">
+                                                                    <TabsList>
+                                                                        <TabsTrigger value="details">
+                                                                            <User className="h-4 w-4 mr-2" /> 
+                                                                            Personal Details
+                                                                        </TabsTrigger>
+                                                                        <TabsTrigger value="ride-bookings">
+                                                                            <Car className="h-4 w-4 mr-2" /> 
+                                                                            Ride Bookings
+                                                                        </TabsTrigger>
+                                                                    </TabsList>
+
+                                                                    <TabsContent value="details">
+                                                                        <div className="rounded-md border bg-background p-6">
+                                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                                                <div>
+                                                                                    <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
+                                                                                    <div className="grid grid-cols-1 gap-3">
+                                                                                        <div>
+                                                                                            <span className="text-muted-foreground">Name:</span>
+                                                                                            <p className="font-medium">{expandedDriverDetails?.driver?.name}</p>
+                                                                                        </div>
+                                                                                        <div>
+                                                                                            <span className="text-muted-foreground">Address:</span>
+                                                                                            <p className="font-medium">{expandedDriverDetails?.driver?.address || "Not provided"}</p>
+                                                                                        </div>
+                                                                                        <div>
+                                                                                            <span className="text-muted-foreground">Status:</span>
+                                                                                            <div className="mt-1">
+                                                                                                <StatusBadge status={expandedDriverDetails?.driver?.status} />
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <div>
+                                                                                            <span className="text-muted-foreground">Member Since:</span>
+                                                                                            <p className="font-medium">
+                                                                                                {expandedDriverDetails?.driver?.joinedDate || "N/A"}
+                                                                                            </p>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                                
+                                                                                <div>
+                                                                                    <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
+                                                                                    <div className="grid grid-cols-1 gap-3">
+                                                                                        <div>
+                                                                                            <span className="text-muted-foreground">Email:</span>
+                                                                                            <p className="font-medium">{expandedDriverDetails?.driver?.email}</p>
+                                                                                        </div>
+                                                                                        <div>
+                                                                                            <span className="text-muted-foreground">Phone:</span>
+                                                                                            <p className="font-medium">{expandedDriverDetails?.driver?.phone}</p>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                                
+                                                                                <div className="md:col-span-2">
+                                                                                    <h3 className="text-lg font-semibold mb-4">Vehicle Details</h3>
+                                                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                                                        <div className="bg-primary/10 p-4 rounded-lg">
+                                                                                            <div className="text-sm text-muted-foreground">Car Model</div>
+                                                                                            <div className="text-lg font-bold mt-1">{expandedDriverDetails?.driver?.carModel}</div>
+                                                                                        </div>
+                                                                                        <div className="bg-primary/10 p-4 rounded-lg">
+                                                                                            <div className="text-sm text-muted-foreground">Car Number</div>
+                                                                                            <div className="text-lg font-bold mt-1">{expandedDriverDetails?.driver?.carNumber}</div>
+                                                                                        </div>
+                                                                                        <div className="bg-primary/10 p-4 rounded-lg">
+                                                                                            <div className="text-sm text-muted-foreground">Car Type</div>
+                                                                                            <div className="text-lg font-bold mt-1 capitalize">{expandedDriverDetails?.driver?.carType}</div>
+                                                                                            <div className="text-sm text-muted-foreground">{expandedDriverDetails?.driver?.seatingCapacity} seats</div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                                
+                                                                                <div className="md:col-span-2">
+                                                                                    <h3 className="text-lg font-semibold mb-4">Performance</h3>
+                                                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                                                        <div className="bg-primary/10 p-4 rounded-lg">
+                                                                                            <div className="text-sm text-muted-foreground">Rating</div>
+                                                                                            <div className="text-lg font-bold mt-1 flex items-center">
+                                                                                                {expandedDriverDetails?.driver?.rating || "N/A"}
+                                                                                                {expandedDriverDetails?.driver?.rating && <span className="ml-1 text-yellow-500">★</span>}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <div className="bg-primary/10 p-4 rounded-lg">
+                                                                                            <div className="text-sm text-muted-foreground">Total Rides</div>
+                                                                                            <div className="text-lg font-bold mt-1">{expandedDriverDetails?.rideBookings?.length || 0}</div>
+                                                                                        </div>
+                                                                                        <div className="bg-primary/10 p-4 rounded-lg">
+                                                                                            <div className="text-sm text-muted-foreground">Completion Rate</div>
+                                                                                            <div className="text-lg font-bold mt-1">
+                                                                                                {expandedDriverDetails?.rideBookings?.length 
+                                                                                                    ? `${Math.round((expandedDriverDetails.rideBookings.filter(booking => booking.status === "completed").length / expandedDriverDetails.rideBookings.length) * 100)}%` 
+                                                                                                    : "N/A"}
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </TabsContent>
+
+                                                                    <TabsContent value="ride-bookings">
+                                                                        <div className="rounded-md border bg-background">
+                                                                            <Table>
+                                                                                <TableHeader>
+                                                                                    <TableRow>
+                                                                                        <TableHead>ID</TableHead>
+                                                                                        <TableHead>Customer</TableHead>
+                                                                                        <TableHead>Route</TableHead>
+                                                                                        <TableHead>Time</TableHead>
+                                                                                        <TableHead>Passengers</TableHead>
+                                                                                        <TableHead>Status</TableHead>
+                                                                                        <TableHead>Price</TableHead>
+                                                                                    </TableRow>
+                                                                                </TableHeader>
+                                                                                <TableBody>
+                                                                                    {expandedDriverDetails?.rideBookings?.map(booking => (
+                                                                                        <TableRow key={booking.id}>
+                                                                                            <TableCell className="font-medium">{booking.id}</TableCell>
+                                                                                            <TableCell>{booking.customerName}</TableCell>
+                                                                                            <TableCell>
+                                                                                                <div className="flex items-start gap-1">
+                                                                                                    <MapPin className="h-3 w-3 mt-1 text-muted-foreground" />
+                                                                                                    <div>
+                                                                                                        <div className="text-sm">{booking.pickupLocation}</div>
+                                                                                                        <div className="text-xs text-muted-foreground">to</div>
+                                                                                                        <div className="text-sm">{booking.dropLocation}</div>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </TableCell>
+                                                                                            <TableCell>
+                                                                                                <div>
+                                                                                                    <div>{format(new Date(booking.pickupTime), "MMM dd, yyyy")}</div>
+                                                                                                    <div className="text-xs text-muted-foreground">
+                                                                                                        {format(new Date(booking.pickupTime), "h:mm a")} - {format(new Date(booking.dropTime), "h:mm a")}
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </TableCell>
+                                                                                            <TableCell>{booking.numberOfPersons}</TableCell>
+                                                                                            <TableCell>
+                                                                                                <RideStatusBadge status={booking.status} />
+                                                                                            </TableCell>
+                                                                                            <TableCell>${booking.price.toFixed(2)}</TableCell>
+                                                                                        </TableRow>
+                                                                                    ))}
+                                                                                    {(!expandedDriverDetails?.rideBookings || expandedDriverDetails.rideBookings.length === 0) && (
+                                                                                        <TableRow>
+                                                                                            <TableCell colSpan={7} className="text-center py-4 text-muted-foreground">
+                                                                                                No ride bookings found for this driver
+                                                                                            </TableCell>
+                                                                                        </TableRow>
+                                                                                    )}
+                                                                                </TableBody>
+                                                                            </Table>
+                                                                        </div>
+                                                                    </TabsContent>
+                                                                </Tabs>
+                                                            </div>
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </>
                                     ))
                                 )}
                             </TableBody>
@@ -302,6 +536,15 @@ const DriverManagement = () => {
                                     id="phone"
                                     value={driverToEdit.phone}
                                     onChange={(e) => setDriverToEdit({...driverToEdit, phone: e.target.value})}
+                                    className="col-span-3"
+                                />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="address" className="text-right">Address</Label>
+                                <Input
+                                    id="address"
+                                    value={driverToEdit.address || ""}
+                                    onChange={(e) => setDriverToEdit({...driverToEdit, address: e.target.value})}
                                     className="col-span-3"
                                 />
                             </div>

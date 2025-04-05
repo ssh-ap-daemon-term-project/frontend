@@ -23,6 +23,7 @@ html {
 /* custom scroll bar */
 ::-webkit-scrollbar {
   width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-thumb {
   background-color: #703bc0;

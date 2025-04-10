@@ -26,6 +26,7 @@ import {
   TrashIcon,
 } from "lucide-react"
 import { toast } from "react-toastify"
+import { createItinerary } from "@/api/customer"
 
 // Mock data for itineraries
 const mockItineraries = [
@@ -164,6 +165,7 @@ export default function ItinerariesPage() {
     name: "",
     numberOfPersons: 1,
   })
+  const [loading, setLoading] = useState(false)
 
   const upcomingItineraries = itineraries.filter((itinerary) => itinerary.status === "upcoming")
   const ongoingItineraries = itineraries.filter((itinerary) => itinerary.status === "ongoing")
@@ -195,42 +197,23 @@ export default function ItinerariesPage() {
     })
   }
 
-  const handleCreateItinerary = () => {
-    // Validate form
-    if (!newItinerary.name.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter an itinerary name.",
-        variant: "destructive",
-      })
-      return
+
+  const handleCreateItinerary = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      const response = await createItinerary(newItinerary);
+      console.log('Itinerary created:', response);
+      // Redirect to the newly created itinerary
+      navigate(`/itineraries/${response.id}`);
+    } catch (err) {
+      console.log(err);
+      toast.error(err.response.data.message || "Failed to create itinerary");
+    } finally {
+      setLoading(false);
     }
-
-    // In a real app, you would call an API to create the itinerary
-    const newId = Math.max(...itineraries.map((i) => i.id)) + 1
-
-    const createdItinerary = {
-      id: newId,
-      name: newItinerary.name,
-      numberOfPersons: newItinerary.numberOfPersons,
-      createdAt: new Date(),
-      status: "upcoming",
-      startDate: null,
-      endDate: null,
-      destinations: [],
-      hotelItems: [],
-      scheduleItems: [],
-    }
-
-    setItineraries([createdItinerary, ...itineraries])
-    setShowCreateDialog(false)
-    setNewItinerary({ name: "", numberOfPersons: 1 })
-
-    toast({
-      title: "Itinerary Created",
-      description: `Your itinerary "${createdItinerary.name}" has been created.`,
-    })
-  }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -556,7 +539,7 @@ function ItineraryCard({ itinerary, onDelete }) {
 
       <CardFooter>
         <Button variant="secondary" className="w-full" asChild>
-          <Link href={`/itineraries/${itinerary.id}`}>View Itinerary</Link>
+          <Link to={`/itineraries/${itinerary.id}`}>View Itinerary</Link>
         </Button>
       </CardFooter>
     </Card>

@@ -1,7 +1,7 @@
 import React from 'react'
 import HotelsPage from './components/hotel-page'
 import BookingsPage from './components/cust-bookings'
-import ItinerariesPage from './components/itinery-main'
+import ItinerariesPage from './components/itinerary-main'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export const Metadata = {

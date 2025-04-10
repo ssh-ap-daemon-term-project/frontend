@@ -718,9 +718,9 @@ export default function ItineraryDetailPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
         <Button variant="ghost" className="mb-2 gap-2" asChild>
-          <Link href="/itineraries">
+          <Link to="/customer">
             <ArrowLeftIcon className="h-4 w-4" />
-            Back to Itineraries
+            Back to Dashboard
           </Link>
         </Button>
 
@@ -777,7 +777,7 @@ export default function ItineraryDetailPage() {
             </Button>
 
             <Button variant="outline" asChild>
-              <Link href={`/itineraries/${itinerary.id}/edit`}>
+              <Link to={`/itineraries/${itinerary.id}/edit`}>
                 <PencilIcon className="mr-2 h-4 w-4" />
                 Edit Itinerary
               </Link>
@@ -971,7 +971,7 @@ export default function ItineraryDetailPage() {
                         </Button>
                       )}
                       <Button variant="outline" size="sm" asChild>
-                        <Link href={`/hotels/${room.hotelId}`}>View Hotel</Link>
+                        <Link to={`/hotels/${room.hotelId}`}>View Hotel</Link>
                       </Button>
                     </div>
                   </CardHeader>
@@ -1230,7 +1230,7 @@ export default function ItineraryDetailPage() {
                             </div>
 
                             <Button variant="outline" size="sm" className="w-full" asChild>
-                              <Link href={`/hotels/${room.hotelId}?tab=reviews`}>View All Reviews</Link>
+                              <Link to={`/hotels/${room.hotelId}?tab=reviews`}>View All Reviews</Link>
                             </Button>
                           </div>
                         </AccordionContent>

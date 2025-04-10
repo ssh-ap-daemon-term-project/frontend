@@ -17,8 +17,8 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { format } from "date-fns"
 import { CarIcon, MapPinIcon, SearchIcon, StarIcon, PhoneIcon, CalendarIcon } from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
-import Link from "next/link"
+import { toast } from "react-toastify"
+import {Link} from "react-router-dom"
 
 // Mock data for rides
 const mockRides = {

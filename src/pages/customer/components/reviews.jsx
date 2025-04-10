@@ -1,4 +1,3 @@
-"use client"
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -15,7 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { StarIcon, PencilIcon, HotelIcon, GlobeIcon, CarIcon } from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "react-toastify"
 
 // Mock data for reviews
 const mockReviews = {

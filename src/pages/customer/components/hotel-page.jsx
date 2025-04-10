@@ -1,7 +1,7 @@
-"use client"
+
 
 import { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
+import { useLocation } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Slider } from "@/components/ui/slider"
@@ -12,7 +12,8 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { StarIcon, MapPinIcon, SearchIcon, FilterIcon } from "lucide-react"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import Link from "next/link"
+import { Link } from "react-router-dom"
+import { useSearchParams } from "react-router-dom"
 
 // Mock data for hotels
 const mockHotels = [
@@ -79,7 +80,7 @@ const mockHotels = [
 ]
 
 export default function HotelsPage() {
-  const searchParams = useSearchParams()
+    const [searchParams, setSearchParams] = useSearchParams()
   const cityParam = searchParams.get("city")
 
   const [filters, setFilters] = useState({
@@ -243,7 +244,7 @@ export default function HotelsPage() {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredHotels.map((hotel) => (
-          <Link href={`/hotels/${hotel.id}`} key={hotel.id}>
+          <Link key={hotel.id} to={`/hotels/${hotel.id}`}>
             <Card className="h-full overflow-hidden transition-all hover:shadow-md">
               <div className="relative h-48 overflow-hidden">
                 <img

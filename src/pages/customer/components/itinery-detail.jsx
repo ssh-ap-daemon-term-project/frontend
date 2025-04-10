@@ -1,8 +1,8 @@
-"use client"
-
 import { useState } from "react"
-import { useParams, useRouter } from "next/navigation"
-import Link from "next/link"
+// import { useParams, useRouter } from "next/navigation"
+import { useNavigate } from "react-router-dom"
+import { useParams } from "react-router-dom"
+import {Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -38,7 +38,7 @@ import {
   CreditCardIcon,
   DollarSignIcon,
 } from "lucide-react"
-import { toast } from "@/components/ui/use-toast"
+import { toast } from "react-toastify"
 
 // Mock data for a specific itinerary
 const mockItinerary = {
@@ -171,9 +171,13 @@ const mockAvailableRooms = [
 ]
 
 export default function ItineraryDetailPage() {
-  const params = useParams()
-  const router = useRouter()
-  const itineraryId = params.id
+//   const params = useParams()
+//   const router = useRouter()
+//   const itineraryId = params.id
+  const navigate = useNavigate()
+  const { id } = useParams()
+  const itineraryId = id
+
 
   // In a real app, you would fetch the itinerary data based on the ID
   const [itinerary, setItinerary] = useState(mockItinerary)

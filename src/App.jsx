@@ -24,28 +24,16 @@ import CustomerPage from './pages/customer/customer-page';
 function App() {
   return (
     <>
-      {/* <Header />
+      <Header />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/hotel" element={<HotelDashboard />} />
         <Route path="/hotel/profile" element={<HotelProfile />} />
-      </Routes> */}
-
-      
-      { /* hotels/id  */ }
-      <CustomerPage />
-      <Routes>
-        <Route path="/hotels" element={<HotelsPage />} />
-        <Route path="/hotels/:id" element={<HotelDetailPage />} />
-        <Route path="/itineraries" element={<ItinerariesPage />} />
-        <Route path="/itineraries/:id" element={<ItineraryDetailPage />} />
-        <Route path="/itineraries/edit/:id" element={<EditItineraryPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/bookings" element={<BookingsPage />} />
       </Routes>
-      {/* <BookingsPage /> */}
+
+      <ToastContainer />
       <PWABadge />
     </>
   );

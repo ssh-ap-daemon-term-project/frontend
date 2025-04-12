@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { Link } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -26,137 +26,15 @@ import {
   TrashIcon,
 } from "lucide-react"
 import { toast } from "react-toastify"
-import { createItinerary } from "@/api/customer"
-
-// Mock data for itineraries
-const mockItineraries = [
-  {
-    id: 1,
-    name: "Summer Vacation",
-    numberOfPersons: 3,
-    createdAt: new Date(2023, 5, 10),
-    status: "upcoming", // Custom status: upcoming, ongoing, completed
-    startDate: new Date(2023, 7, 15),
-    endDate: new Date(2023, 7, 25),
-    destinations: ["New York", "Miami"],
-    hotelItems: [
-      {
-        id: 101,
-        hotelId: 1,
-        hotelName: "Grand Plaza Hotel",
-        city: "New York",
-        startDate: new Date(2023, 7, 15),
-        endDate: new Date(2023, 7, 18),
-      },
-      {
-        id: 102,
-        hotelId: 2,
-        hotelName: "Seaside Resort",
-        city: "Miami",
-        startDate: new Date(2023, 7, 19),
-        endDate: new Date(2023, 7, 25),
-      },
-    ],
-    scheduleItems: [
-      {
-        id: 201,
-        startTime: new Date(2023, 7, 16, 10, 0),
-        endTime: new Date(2023, 7, 16, 13, 0),
-        location: "Central Park",
-        description: "Morning walk and picnic",
-      },
-      {
-        id: 202,
-        startTime: new Date(2023, 7, 17, 18, 0),
-        endTime: new Date(2023, 7, 17, 21, 0),
-        location: "Broadway",
-        description: "Watch a musical",
-      },
-      {
-        id: 203,
-        startTime: new Date(2023, 7, 20, 9, 0),
-        endTime: new Date(2023, 7, 20, 16, 0),
-        location: "Miami Beach",
-        description: "Beach day and water sports",
-      },
-    ],
-  },
-  {
-    id: 2,
-    name: "Business Trip",
-    numberOfPersons: 1,
-    createdAt: new Date(2023, 6, 5),
-    status: "upcoming",
-    startDate: new Date(2023, 8, 10),
-    endDate: new Date(2023, 8, 15),
-    destinations: ["Chicago"],
-    hotelItems: [
-      {
-        id: 103,
-        hotelId: 4,
-        hotelName: "City Center Suites",
-        city: "Chicago",
-        startDate: new Date(2023, 8, 10),
-        endDate: new Date(2023, 8, 15),
-      },
-    ],
-    scheduleItems: [
-      {
-        id: 204,
-        startTime: new Date(2023, 8, 11, 9, 0),
-        endTime: new Date(2023, 8, 11, 17, 0),
-        location: "Convention Center",
-        description: "Annual Industry Conference",
-      },
-      {
-        id: 205,
-        startTime: new Date(2023, 8, 12, 12, 0),
-        endTime: new Date(2023, 8, 12, 14, 0),
-        location: "Downtown Restaurant",
-        description: "Lunch meeting with clients",
-      },
-    ],
-  },
-  {
-    id: 3,
-    name: "Anniversary Trip",
-    numberOfPersons: 2,
-    createdAt: new Date(2023, 3, 15),
-    status: "completed",
-    startDate: new Date(2023, 4, 20),
-    endDate: new Date(2023, 4, 27),
-    destinations: ["San Francisco"],
-    hotelItems: [
-      {
-        id: 104,
-        hotelId: 5,
-        hotelName: "Harbor View Inn",
-        city: "San Francisco",
-        startDate: new Date(2023, 4, 20),
-        endDate: new Date(2023, 4, 27),
-      },
-    ],
-    scheduleItems: [
-      {
-        id: 206,
-        startTime: new Date(2023, 4, 21, 18, 0),
-        endTime: new Date(2023, 4, 21, 21, 0),
-        location: "Waterfront Restaurant",
-        description: "Anniversary dinner",
-      },
-      {
-        id: 207,
-        startTime: new Date(2023, 4, 22, 10, 0),
-        endTime: new Date(2023, 4, 22, 16, 0),
-        location: "Wine Country",
-        description: "Wine tasting tour",
-      },
-    ],
-  },
-]
+import { 
+  createItinerary, 
+  getCustomerItineraries, 
+  deleteItinerary 
+} from "@/api/itineraryApi"
 
 export default function ItinerariesPage() {
-  const [itineraries, setItineraries] = useState(mockItineraries)
+  const navigate = useNavigate()
+  const [itineraries, setItineraries] = useState([])
   const [searchQuery, setSearchQuery] = useState("")
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [selectedItinerary, setSelectedItinerary] = useState(null)
@@ -166,52 +44,140 @@ export default function ItinerariesPage() {
     numberOfPersons: 1,
   })
   const [loading, setLoading] = useState(false)
+  const [isLoadingItineraries, setIsLoadingItineraries] = useState(true)
 
-  const upcomingItineraries = itineraries.filter((itinerary) => itinerary.status === "upcoming")
-  const ongoingItineraries = itineraries.filter((itinerary) => itinerary.status === "ongoing")
-  const completedItineraries = itineraries.filter((itinerary) => itinerary.status === "completed")
+  // Ensure itineraries is always an array before filtering
+  const safeItineraries = Array.isArray(itineraries) ? itineraries : [];
+  // Filter itineraries by date using the safe array
+  const upcomingItineraries = safeItineraries.filter((itinerary) => {
+    if (!itinerary?.startDate || !itinerary?.endDate) return false;
+    
+    const startDate = new Date(itinerary.startDate)
+    const endDate = new Date(itinerary.endDate)
+    const today = new Date()
+    return startDate > today && endDate > today
+  })
+  
+  const ongoingItineraries = safeItineraries.filter((itinerary) => {
+    if (!itinerary?.startDate || !itinerary?.endDate) return false;
+    
+    const startDate = new Date(itinerary.startDate)
+    const endDate = new Date(itinerary.endDate)
+    const today = new Date()
+    return startDate <= today && endDate >= today
+  })
+  
+  const completedItineraries = safeItineraries.filter((itinerary) => {
+    if (!itinerary?.endDate) return false;
+    
+    const endDate = new Date(itinerary.endDate)
+    const today = new Date()
+    return endDate < today
+  })
+
+  useEffect(() => {
+    // Fetch itineraries from the API
+    const fetchItineraries = async () => {
+      setIsLoadingItineraries(true)
+      try {
+        const response = await getCustomerItineraries()
+        // Ensure we always set an array, even if the API returns something unexpected
+        const data = response?.data;
+        setItineraries(Array.isArray(data) ? data : [])
+      } catch (err) {
+        console.error("Error fetching itineraries:", err)
+        toast.error("Failed to load itineraries. Please try again.")
+        setItineraries([])
+      } finally {
+        setIsLoadingItineraries(false)
+      }
+    }
+
+    fetchItineraries()
+  }, [])
 
   const filteredItineraries = (list) => {
-    if (!searchQuery) return list
+    // Ensure list is always an array
+    const safeList = Array.isArray(list) ? list : [];
+    
+    if (!searchQuery) return safeList;
 
-    return list.filter(
+    return safeList.filter(
       (itinerary) =>
-        itinerary.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        itinerary.destinations.some((dest) => dest.toLowerCase().includes(searchQuery.toLowerCase())),
+        (itinerary?.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (Array.isArray(itinerary?.destinations) && itinerary.destinations.some((dest) => 
+          dest && dest.toLowerCase().includes(searchQuery.toLowerCase())
+        )),
     )
   }
 
   const handleDeleteItinerary = (itinerary) => {
+    if (!itinerary) return;
+    
     setSelectedItinerary(itinerary)
     setShowDeleteDialog(true)
   }
 
-  const confirmDeleteItinerary = () => {
-    // In a real app, you would call an API to delete the itinerary
-    setItineraries(itineraries.filter((i) => i.id !== selectedItinerary.id))
-    setShowDeleteDialog(false)
-
-    toast({
-      title: "Itinerary Deleted",
-      description: `Your itinerary "${selectedItinerary.name}" has been deleted.`,
-    })
+  const confirmDeleteItinerary = async () => {
+    if (!selectedItinerary?.id) {
+      setShowDeleteDialog(false)
+      return
+    }
+    
+    try {
+      await deleteItinerary(selectedItinerary.id)
+      
+      // Update local state after successful deletion
+      setItineraries(safeItineraries.filter((i) => i.id !== selectedItinerary.id))
+      
+      toast.success(`Your itinerary "${selectedItinerary.name || 'Unnamed'}" has been deleted.`)
+    } catch (err) {
+      console.error("Error deleting itinerary:", err)
+      toast.error("Failed to delete itinerary. Please try again.")
+    } finally {
+      setShowDeleteDialog(false)
+      setSelectedItinerary(null)
+    }
   }
-
 
   const handleCreateItinerary = async (e) => {
     e.preventDefault();
     setLoading(true);
     
     try {
+      // Validate form data
+      if (!newItinerary.name.trim()) {
+        toast.error("Please provide an itinerary name")
+        setLoading(false)
+        return
+      }
+      
+      // Call the API to create a new itinerary
       const response = await createItinerary(newItinerary);
-      console.log('Itinerary created:', response);
-      // Redirect to the newly created itinerary
-      navigate(`/itineraries/${response.id}`);
+      
+      // Close dialog and reset form
+      setShowCreateDialog(false)
+      setNewItinerary({
+        name: "",
+        numberOfPersons: 1,
+      })
+      
+      // Navigate to the newly created itinerary
+      toast.success("Itinerary created successfully!")
+      
+      if (response?.id) {
+        navigate(`/itineraries/${response.id}`)
+      } else {
+        // If no ID was returned, refresh the list instead
+        const refreshResponse = await getCustomerItineraries()
+        const refreshData = refreshResponse?.data;
+        setItineraries(Array.isArray(refreshData) ? refreshData : [])
+      }
     } catch (err) {
-      console.log(err);
-      toast.error(err.response.data.message || "Failed to create itinerary");
+      console.error("Error creating itinerary:", err)
+      toast.error(err.response?.data?.message || "Failed to create itinerary")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
   };
 
@@ -241,8 +207,16 @@ export default function ItinerariesPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="upcoming" className="mb-8">
+      <Tabs defaultValue="all" className="mb-8">
         <TabsList className="mb-4">
+          <TabsTrigger value="all">
+            All
+            {safeItineraries.length > 0 && (
+              <Badge className="ml-2" variant="secondary">
+                {safeItineraries.length}
+              </Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="upcoming">
             Upcoming
             {upcomingItineraries.length > 0 && (
@@ -269,80 +243,119 @@ export default function ItinerariesPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="upcoming">
-          {filteredItineraries(upcomingItineraries).length > 0 ? (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {filteredItineraries(upcomingItineraries).map((itinerary) => (
-                <ItineraryCard
-                  key={itinerary.id}
-                  itinerary={itinerary}
-                  onDelete={() => handleDeleteItinerary(itinerary)}
+        {isLoadingItineraries ? (
+          <div className="flex justify-center py-12">
+            <div className="loading-spinner"></div>
+          </div>
+        ) : (
+          <>
+            <TabsContent value="all">
+              {filteredItineraries(safeItineraries).length > 0 ? (
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {filteredItineraries(safeItineraries).map((itinerary) => (
+                    <ItineraryCard
+                      key={itinerary?.id || `all-${Math.random()}`}
+                      itinerary={itinerary}
+                      onDelete={() => handleDeleteItinerary(itinerary)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  title={searchQuery ? "No matching itineraries" : "No itineraries"}
+                  description={
+                    searchQuery
+                      ? "Try adjusting your search query"
+                      : "You don't have any itineraries. Create one to get started."
+                  }
+                  actionText="Create Itinerary"
+                  onAction={() => setShowCreateDialog(true)}
                 />
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              title={searchQuery ? "No matching itineraries" : "No upcoming itineraries"}
-              description={
-                searchQuery
-                  ? "Try adjusting your search query"
-                  : "You don't have any upcoming itineraries. Create one to get started."
-              }
-              actionText="Create Itinerary"
-              onAction={() => setShowCreateDialog(true)}
-            />
-          )}
-        </TabsContent>
+              )}
+            </TabsContent>
+            <TabsContent value="upcoming">
+              {filteredItineraries(upcomingItineraries).length > 0 ? (
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {filteredItineraries(upcomingItineraries).map((itinerary) => (
+                    <ItineraryCard
+                      key={itinerary?.id || `upcoming-${Math.random()}`}
+                      itinerary={itinerary}
+                      onDelete={() => handleDeleteItinerary(itinerary)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  title={searchQuery ? "No matching itineraries" : "No upcoming itineraries"}
+                  description={
+                    searchQuery
+                      ? "Try adjusting your search query"
+                      : "You don't have any upcoming itineraries. Create one to get started."
+                  }
+                  actionText="Create Itinerary"
+                  onAction={() => setShowCreateDialog(true)}
+                />
+              )}
+            </TabsContent>
 
-        <TabsContent value="ongoing">
-          {filteredItineraries(ongoingItineraries).length > 0 ? (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {filteredItineraries(ongoingItineraries).map((itinerary) => (
-                <ItineraryCard
-                  key={itinerary.id}
-                  itinerary={itinerary}
-                  onDelete={() => handleDeleteItinerary(itinerary)}
+            <TabsContent value="ongoing">
+              {filteredItineraries(ongoingItineraries).length > 0 ? (
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {filteredItineraries(ongoingItineraries).map((itinerary) => (
+                    <ItineraryCard
+                      key={itinerary?.id || `ongoing-${Math.random()}`}
+                      itinerary={itinerary}
+                      onDelete={() => handleDeleteItinerary(itinerary)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  title={searchQuery ? "No matching itineraries" : "No ongoing itineraries"}
+                  description={
+                    searchQuery
+                      ? "Try adjusting your search query"
+                      : "You don't have any ongoing itineraries at the moment."
+                  }
+                  actionText="View Upcoming"
+                  onAction={() => {
+                    const upcomingTab = document.querySelector('[value="upcoming"]');
+                    if (upcomingTab) upcomingTab.click();
+                  }}
                 />
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              title={searchQuery ? "No matching itineraries" : "No ongoing itineraries"}
-              description={
-                searchQuery
-                  ? "Try adjusting your search query"
-                  : "You don't have any ongoing itineraries at the moment."
-              }
-              actionText="View Upcoming"
-              onAction={() => document.querySelector('[value="upcoming"]').click()}
-            />
-          )}
-        </TabsContent>
+              )}
+            </TabsContent>
 
-        <TabsContent value="completed">
-          {filteredItineraries(completedItineraries).length > 0 ? (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {filteredItineraries(completedItineraries).map((itinerary) => (
-                <ItineraryCard
-                  key={itinerary.id}
-                  itinerary={itinerary}
-                  onDelete={() => handleDeleteItinerary(itinerary)}
+            <TabsContent value="completed">
+              {filteredItineraries(completedItineraries).length > 0 ? (
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {filteredItineraries(completedItineraries).map((itinerary) => (
+                    <ItineraryCard
+                      key={itinerary?.id || `completed-${Math.random()}`}
+                      itinerary={itinerary}
+                      onDelete={() => handleDeleteItinerary(itinerary)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  title={searchQuery ? "No matching itineraries" : "No completed itineraries"}
+                  description={
+                    searchQuery ? "Try adjusting your search query" : "You don't have any completed itineraries yet."
+                  }
+                  actionText="View Upcoming"
+                  onAction={() => {
+                    const upcomingTab = document.querySelector('[value="upcoming"]');
+                    if (upcomingTab) upcomingTab.click();
+                  }}
                 />
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              title={searchQuery ? "No matching itineraries" : "No completed itineraries"}
-              description={
-                searchQuery ? "Try adjusting your search query" : "You don't have any completed itineraries yet."
-              }
-              actionText="View Upcoming"
-              onAction={() => document.querySelector('[value="upcoming"]').click()}
-            />
-          )}
-        </TabsContent>
+              )}
+            </TabsContent>
+          </>
+        )}
       </Tabs>
 
+      {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
@@ -354,12 +367,16 @@ export default function ItinerariesPage() {
 
           {selectedItinerary && (
             <div className="mt-2 rounded-md bg-muted p-3 text-sm">
-              <p className="font-medium">{selectedItinerary.name}</p>
-              <p className="text-muted-foreground">{selectedItinerary.destinations.join(", ")}</p>
+              <p className="font-medium">{selectedItinerary.name || 'Unnamed Itinerary'}</p>
+              <p className="text-muted-foreground">
+                {Array.isArray(selectedItinerary.destinations) 
+                  ? selectedItinerary.destinations.join(", ")
+                  : 'No destinations'}
+              </p>
               {selectedItinerary.startDate && selectedItinerary.endDate && (
                 <p className="text-muted-foreground">
-                  {format(selectedItinerary.startDate, "MMM d, yyyy")} -{" "}
-                  {format(selectedItinerary.endDate, "MMM d, yyyy")}
+                  {format(new Date(selectedItinerary.startDate), "MMM d, yyyy")} -{" "}
+                  {format(new Date(selectedItinerary.endDate), "MMM d, yyyy")}
                 </p>
               )}
             </div>
@@ -376,81 +393,97 @@ export default function ItinerariesPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+      {/* Create Itinerary Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={(open) => {
+        setShowCreateDialog(open);
+        if (!open) {
+          // Reset form when dialog is closed
+          setNewItinerary({
+            name: "",
+            numberOfPersons: 1,
+          });
+        }
+      }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create New Itinerary</DialogTitle>
             <DialogDescription>Enter the details for your new travel itinerary.</DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <label htmlFor="name" className="text-sm font-medium">
-                Itinerary Name
-              </label>
-              <Input
-                id="name"
-                placeholder="e.g., Summer Vacation 2023"
-                value={newItinerary.name}
-                onChange={(e) => setNewItinerary({ ...newItinerary, name: e.target.value })}
-              />
-            </div>
-
-            <div className="grid gap-2">
-              <label htmlFor="persons" className="text-sm font-medium">
-                Number of Travelers
-              </label>
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() =>
-                    setNewItinerary({
-                      ...newItinerary,
-                      numberOfPersons: Math.max(1, newItinerary.numberOfPersons - 1),
-                    })
-                  }
-                  disabled={newItinerary.numberOfPersons <= 1}
-                >
-                  -
-                </Button>
+          <form onSubmit={handleCreateItinerary}>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <label htmlFor="name" className="text-sm font-medium">
+                  Itinerary Name
+                </label>
                 <Input
-                  id="persons"
-                  type="number"
-                  min="1"
-                  className="text-center"
-                  value={newItinerary.numberOfPersons}
-                  onChange={(e) =>
-                    setNewItinerary({
-                      ...newItinerary,
-                      numberOfPersons: Number.parseInt(e.target.value) || 1,
-                    })
-                  }
+                  id="name"
+                  placeholder="e.g., Summer Vacation 2023"
+                  value={newItinerary.name}
+                  onChange={(e) => setNewItinerary({ ...newItinerary, name: e.target.value })}
+                  required
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() =>
-                    setNewItinerary({
-                      ...newItinerary,
-                      numberOfPersons: newItinerary.numberOfPersons + 1,
-                    })
-                  }
-                >
-                  +
-                </Button>
+              </div>
+
+              <div className="grid gap-2">
+                <label htmlFor="persons" className="text-sm font-medium">
+                  Number of Travelers
+                </label>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() =>
+                      setNewItinerary({
+                        ...newItinerary,
+                        numberOfPersons: Math.max(1, newItinerary.numberOfPersons - 1),
+                      })
+                    }
+                    disabled={newItinerary.numberOfPersons <= 1}
+                  >
+                    -
+                  </Button>
+                  <Input
+                    id="persons"
+                    type="number"
+                    min="1"
+                    className="text-center"
+                    value={newItinerary.numberOfPersons}
+                    onChange={(e) =>
+                      setNewItinerary({
+                        ...newItinerary,
+                        numberOfPersons: Math.max(1, Number.parseInt(e.target.value) || 1),
+                      })
+                    }
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() =>
+                      setNewItinerary({
+                        ...newItinerary,
+                        numberOfPersons: (newItinerary.numberOfPersons || 1) + 1,
+                      })
+                    }
+                  >
+                    +
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateItinerary}>Create Itinerary</Button>
-          </DialogFooter>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Creating..." : "Create Itinerary"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
@@ -458,16 +491,49 @@ export default function ItinerariesPage() {
 }
 
 function ItineraryCard({ itinerary, onDelete }) {
+  // Safely handle null/undefined itinerary
+  if (!itinerary) {
+    return null;
+  }
+
+  // Helper function to extract destinations from room items
+  const getDestinations = () => {
+    if (Array.isArray(itinerary.destinations) && itinerary.destinations.length > 0) {
+      return itinerary.destinations
+    } else if (Array.isArray(itinerary.room_items) && itinerary.room_items.length > 0) {
+      // Extract unique cities from room items
+      const cities = itinerary.room_items
+        .map(item => (item?.city || item?.hotel?.city || ""))
+        .filter(Boolean)
+      return [...new Set(cities)]
+    }
+    return []
+  }
+  
+  const destinations = getDestinations();
+  const id = itinerary.id;
+  
+  // If we don't have an id, we can't navigate
+  if (!id) {
+    return (
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-2">
+          <div className="text-muted-foreground">Invalid itinerary data</div>
+        </CardHeader>
+      </Card>
+    );
+  }
+  
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between">
           <div>
-            <h3 className="text-xl font-bold">{itinerary.name}</h3>
+            <h3 className="text-xl font-bold">{itinerary.name || 'Unnamed Itinerary'}</h3>
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
               <UsersIcon className="h-4 w-4" />
               <span>
-                {itinerary.numberOfPersons} {itinerary.numberOfPersons === 1 ? "traveler" : "travelers"}
+                {itinerary.numberOfPersons || 1} {(itinerary.numberOfPersons || 1) === 1 ? "traveler" : "travelers"}
               </span>
             </div>
           </div>
@@ -481,17 +547,17 @@ function ItineraryCard({ itinerary, onDelete }) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem asChild>
-                <Link href={`/itineraries/${itinerary.id}`} className="cursor-pointer">
+                <Link to={`/itineraries/${id}`} className="cursor-pointer">
                   View Details
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href={`/itineraries/${itinerary.id}/edit`} className="cursor-pointer">
+                <Link to={`/itineraries/${id}/edit`} className="cursor-pointer">
                   <PencilIcon className="mr-2 h-4 w-4" />
                   Edit
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={onDelete} className="cursor-pointer text-destructive">
+              <DropdownMenuItem onClick={() => onDelete?.(itinerary)} className="cursor-pointer text-destructive">
                 <TrashIcon className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
@@ -502,34 +568,44 @@ function ItineraryCard({ itinerary, onDelete }) {
 
       <CardContent className="pb-2">
         <div className="mb-3 flex flex-wrap gap-1">
-          {itinerary.destinations.map((destination) => (
-            <Badge key={destination} variant="secondary">
-              {destination}
-            </Badge>
-          ))}
+          {destinations.length > 0 ? (
+            destinations.map((destination, index) => (
+              <Badge key={`${destination}-${index}`} variant="secondary">
+                {destination}
+              </Badge>
+            ))
+          ) : (
+            <span className="text-sm text-muted-foreground">No destinations added</span>
+          )}
         </div>
 
         {itinerary.startDate && itinerary.endDate && (
           <div className="mb-3 flex items-center gap-2 text-sm">
             <CalendarIcon className="h-4 w-4 text-muted-foreground" />
             <span>
-              {format(itinerary.startDate, "MMM d, yyyy")} - {format(itinerary.endDate, "MMM d, yyyy")}
+              {format(new Date(itinerary.startDate), "MMM d, yyyy")} - {format(new Date(itinerary.endDate), "MMM d, yyyy")}
             </span>
           </div>
         )}
 
         <div className="space-y-2">
           <p className="text-sm font-medium">Accommodations:</p>
-          {itinerary.hotelItems.length > 0 ? (
+          {Array.isArray(itinerary.room_items) && itinerary.room_items.length > 0 ? (
             <div className="space-y-1">
-              {itinerary.hotelItems.map((hotel) => (
-                <div key={hotel.id} className="flex items-center gap-2 text-sm">
+              {itinerary.room_items.slice(0, 2).map((item, index) => (
+                <div key={item?.id || `room-${index}`} className="flex items-center gap-2 text-sm">
                   <MapPinIcon className="h-4 w-4 text-muted-foreground" />
                   <span>
-                    {hotel.hotelName}, {hotel.city}
+                    {item?.hotelName || item?.hotel?.name || "Unknown Hotel"}, 
+                    {item?.city || item?.hotel?.city || "Unknown Location"}
                   </span>
                 </div>
               ))}
+              {itinerary.room_items.length > 2 && (
+                <div className="text-sm text-muted-foreground">
+                  +{itinerary.room_items.length - 2} more accommodations
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">No accommodations added yet</p>
@@ -539,7 +615,7 @@ function ItineraryCard({ itinerary, onDelete }) {
 
       <CardFooter>
         <Button variant="secondary" className="w-full" asChild>
-          <Link to={`/itineraries/${itinerary.id}`}>View Itinerary</Link>
+          <Link to={`/itineraries/${id}`}>View Itinerary</Link>
         </Button>
       </CardFooter>
     </Card>
@@ -552,10 +628,11 @@ function EmptyState({ title, description, actionText, onAction }) {
       <div className="mb-4 rounded-full bg-muted p-3">
         <CalendarIcon className="h-6 w-6 text-muted-foreground" />
       </div>
-      <h3 className="mb-2 text-xl font-medium">{title}</h3>
-      <p className="mb-6 text-muted-foreground">{description}</p>
-      <Button onClick={onAction}>{actionText}</Button>
+      <h3 className="mb-2 text-xl font-medium">{title || "No data available"}</h3>
+      <p className="mb-6 text-muted-foreground">{description || "No information to display."}</p>
+      {actionText && onAction && (
+        <Button onClick={onAction}>{actionText}</Button>
+      )}
     </div>
   )
 }
-

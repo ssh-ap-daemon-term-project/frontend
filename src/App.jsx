@@ -20,6 +20,7 @@ import { Edit } from 'lucide-react';
 import EditItineraryPage from './pages/customer/components/itinerary-edit';
 import ProfilePage from './pages/customer/components/cust-profile';
 import CustomerDashboard from './pages/customer/customer-page';
+import AdminChat from './pages/admin/components/admin-chat';
 
 function App() {
   return (

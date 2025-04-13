@@ -14,7 +14,7 @@ import { Link } from "react-router-dom"
 
 const Home = () => {
   return (
-    <><div className="container mx-auto px-4 py-8">
+    <><div>
 
       <section className="relative mb-12 rounded-3xl bg-gradient-to-r from-primary/90 to-primary p-8 text-primary-foreground">
         <div className="mx-auto max-w-4xl">
@@ -27,10 +27,13 @@ const Home = () => {
       <Hero></Hero>
 
       <div>
+
+      <h4 className="text-4xl md:text-5xl text-center font-normal mt-6">Popular Destinations</h4>
+
       <Carousel_dest></Carousel_dest>
       </div>
 
-      <section className="mb-12">
+      {/* <section className="mb-12">
         <h2 className="mb-6 text-2xl font-bold">Popular Destinations</h2>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {popularDestinations.map((destination) => (
@@ -54,7 +57,7 @@ const Home = () => {
             </Link>
           ))}
         </div>
-      </section>
+      </section> */}
 
       <section className="mb-12">
         <h2 className="mb-6 text-2xl font-bold">Why Choose Us</h2>

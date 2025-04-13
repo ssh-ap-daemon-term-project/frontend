@@ -3,34 +3,46 @@ import styles from "./Carousel_dest.module.css";
 // Slide data
 const slides = [
     {
-        title: "Machu Picchu",
-        subtitle: "Peru",
-        description: "Adventure is never far away",
-        image: "https://i.postimg.cc/GhbGW6WJ/Germany.jpg"
-    },
-    {
-        title: "Chamonix",
+        title: "Eiffel Tower",
         subtitle: "France",
-        description: "Let your dreams come true",
-        image: "https://i.postimg.cc/QtpKPqSy/Barcelona.jpg"
+        description: "Paris' iconic symbol of romance, art, and unforgettable views.",
+        image: "https://i.postimg.cc/cHMCS8fG/paris.png"
     },
     {
-        title: "Mimisa Rocks",
-        subtitle: "Australia",
-        description: "A piece of heaven",
+        title: "Sheikh Zayed Grand Mosque",
+        subtitle: "Abu Dhabi: UAE",
+        description: "A stunning blend of Islamic art, peace, and architectural grandeur.",
+        image: "https://i.postimg.cc/59D4R3hQ/abu-dhabi.png"
+    },
+    {
+        title: "Mt Fuji",
+        subtitle: "Japan",
+        description: "Sacred peak, where nature meets timeless beauty",
         image: "https://i.postimg.cc/6QHKKkrR/Japan.jpg"
     },
     {
-        title: "Four",
-        subtitle: "Australia",
-        description: "A piece of heaven",
-        image: "https://i.postimg.cc/GhbGW6WJ/Germany.jpg"
+        title: "La Sagrada Familia",
+        subtitle: "Barcelona",
+        description: "Gaudí’s masterpiece blending faith, art, and architectural wonder",
+        image: "https://i.postimg.cc/Bvvf6PWG/barcelona.png"
     },
     {
-        title: "Five",
-        subtitle: "Australia",
-        description: "A piece of heaven",
-        image: "https://i.postimg.cc/GhbGW6WJ/Germany.jpg"
+        title: "Grand Canyon National Park",
+        subtitle: "Arizona",
+        description: "Nature’s epic masterpiece carved in time and stone",
+        image: "https://i.postimg.cc/k4dNsK70/Grand-Canyon-National-Park.png"
+    },
+    {
+        title: "Colosseum",
+        subtitle: "Rome",
+        description: "Eternal City where ancient history and vibrant life meet.",
+        image: "https://i.postimg.cc/HL3WvCmT/rome.png"
+    },
+    {
+        title: "The Matterhorn",
+        subtitle: "Switzerland",
+        description: "Zermatt’s iconic peak, where alpine beauty touches the sky",
+        image: "https://i.postimg.cc/FR7fjKLM/switzerland.png"
     },
 ];
 function useTilt(active) {

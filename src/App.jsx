@@ -21,6 +21,7 @@ import EditItineraryPage from './pages/customer/components/itinerary-edit';
 import ProfilePage from './pages/customer/components/cust-profile';
 import CustomerDashboard from './pages/customer/customer-page';
 import DriverDashboard from './pages/driver/driver-page';
+import AdminChat from './pages/admin/components/admin-chat';
 
 function App() {
   return (

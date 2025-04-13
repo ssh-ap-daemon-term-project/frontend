@@ -561,7 +561,7 @@ export default function RoomManagement() {
                     <TableCell>{room.total_no}</TableCell>
                     <TableCell>{room.room_capacity}</TableCell>
                     <TableCell>{room.no_available[0]}</TableCell>
-                    <TableCell>${room.price[0]}</TableCell>
+                    <TableCell>${room.price}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button variant="ghost" size="icon" onClick={() => openEditDialog(room)}>

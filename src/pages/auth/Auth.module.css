@@ -46,18 +46,18 @@
     transition: .5s ease-in-out;
 }
 
-.main input, .main select{
+.main input, .main select {
     width: 60%;
-    height: 10px;
     background: #e0dede;
     justify-content: center;
     display: flex;
     margin: 20px auto;
-    padding: 12px;
+    padding: 5px;
     border: none;
     outline: none;
     border-radius: 5px;
 }
+
 
 .main button{
     width: 60%;

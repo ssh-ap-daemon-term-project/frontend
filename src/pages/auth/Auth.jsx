@@ -22,8 +22,8 @@ const Auth = () => {
     });
 
 
-    const [loading, setLoading] = useState(false);
 
+    const [loading, setLoading] = useState(false);
     const checkboxRef = useRef(null);
 
     const handleChange = (e) => {
@@ -31,6 +31,7 @@ const Auth = () => {
             ...formData,
             [e.target.name]: e.target.value
         });
+        console.log(formData)
     };
 
     const handleSignup = async (e) => {
@@ -146,7 +147,7 @@ const Auth = () => {
                             />
 
 
-                            <select name="gender" required value={formData.gender} onChange={handleChange}>
+                            <select name="gender" required value={formData.gender} onChange={handleChange} style={{ color: formData.gender ? 'black' : 'gray' }}>
                                 <option value="">Select Gender</option>
                                 <option value="male">Male</option>
                                 <option value="female">Female</option>

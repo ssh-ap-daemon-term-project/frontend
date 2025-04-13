@@ -1,8 +1,28 @@
-import { useState } from "react"
-// import { useParams, useRouter } from "next/navigation"
-import { useNavigate } from "react-router-dom"
-import { useParams } from "react-router-dom"
-import {Link } from "react-router-dom"
+"use client"
+
+import { useState, useEffect } from "react"
+import { useNavigate, useParams, Link } from "react-router-dom"
+import { format, isToday, isTomorrow, isYesterday, addDays } from "date-fns"
+import { toast } from "react-toastify"
+import {
+  CalendarIcon,
+  MapPinIcon,
+  ClockIcon,
+  PlusIcon,
+  BedDoubleIcon,
+  CalendarDaysIcon,
+  PencilIcon,
+  TrashIcon,
+  ArrowLeftIcon,
+  UsersIcon,
+  CarIcon,
+  CheckIcon,
+  StarIcon,
+  CreditCardIcon,
+  DollarSignIcon,
+  Hotel,
+} from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -20,167 +40,38 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { format, isToday, isTomorrow, isYesterday, addDays } from "date-fns"
+
+// Import API functions
 import {
-  CalendarIcon,
-  MapPinIcon,
-  ClockIcon,
-  PlusIcon,
-  BedDoubleIcon,
-  CalendarDaysIcon,
-  PencilIcon,
-  TrashIcon,
-  ArrowLeftIcon,
-  UsersIcon,
-  CarIcon,
-  CheckIcon,
-  StarIcon,
-  CreditCardIcon,
-  DollarSignIcon,
-} from "lucide-react"
-import { toast } from "react-toastify"
-
-// Mock data for a specific itinerary
-const mockItinerary = {
-  id: 1,
-  name: "Summer Vacation",
-  numberOfPersons: 3,
-  createdAt: new Date(2023, 5, 10),
-  status: "upcoming", // Custom status: upcoming, ongoing, completed, accepted
-  startDate: new Date(2023, 7, 15),
-  endDate: new Date(2023, 7, 25),
-  destinations: ["New York", "Miami"],
-  roomItems: [
-    {
-      id: 101,
-      roomId: 101,
-      hotelId: 1,
-      hotelName: "Grand Plaza Hotel",
-      roomName: "Deluxe Room",
-      roomType: "deluxe",
-      city: "New York",
-      startDate: new Date(2023, 7, 15),
-      endDate: new Date(2023, 7, 18),
-      image: "/placeholder.svg?height=300&width=500",
-      pricePerNight: 199,
-      capacity: 2,
-      isPaid: false,
-    },
-    {
-      id: 102,
-      roomId: 102,
-      hotelId: 2,
-      hotelName: "Seaside Resort",
-      roomName: "Ocean View Suite",
-      roomType: "suite",
-      city: "Miami",
-      startDate: new Date(2023, 7, 19),
-      endDate: new Date(2023, 7, 25),
-      image: "/placeholder.svg?height=300&width=500",
-      pricePerNight: 299,
-      capacity: 4,
-      isPaid: false,
-    },
-  ],
-  scheduleItems: [
-    {
-      id: 201,
-      startTime: new Date(2023, 7, 16, 10, 0),
-      endTime: new Date(2023, 7, 16, 13, 0),
-      location: "Central Park",
-      description: "Morning walk and picnic",
-    },
-    {
-      id: 202,
-      startTime: new Date(2023, 7, 17, 18, 0),
-      endTime: new Date(2023, 7, 17, 21, 0),
-      location: "Broadway",
-      description: "Watch a musical",
-    },
-    {
-      id: 203,
-      startTime: new Date(2023, 7, 20, 9, 0),
-      endTime: new Date(2023, 7, 20, 16, 0),
-      location: "Miami Beach",
-      description: "Beach day and water sports",
-    },
-  ],
-  rideBookings: [
-    {
-      id: 301,
-      type: "taxi",
-      pickupLocation: "Grand Plaza Hotel",
-      dropoffLocation: "JFK Airport",
-      pickupTime: new Date(2023, 7, 18, 14, 0),
-      status: "confirmed",
-      driverName: "Michael Johnson",
-      driverPhone: "+1 (555) 123-4567",
-      vehicleInfo: "Toyota Camry, Black, License: ABC123",
-      price: 65,
-      withDriverService: true,
-      isReviewed: false,
-    },
-  ],
-  driverServiceRequested: true,
-}
-
-// Mock data for available rooms
-const mockAvailableRooms = [
-  {
-    id: 101,
-    hotelId: 1,
-    hotelName: "Grand Plaza Hotel",
-    name: "Deluxe Room",
-    type: "deluxe",
-    city: "New York",
-    address: "123 Broadway, New York, NY 10001",
-    rating: 4.7,
-    price: 199,
-    capacity: 2,
-    image: "/placeholder.svg?height=300&width=500",
-    amenities: ["Free WiFi", "TV", "Air Conditioning", "Private Bathroom", "Mini Bar"],
-  },
-  {
-    id: 102,
-    hotelId: 2,
-    hotelName: "Seaside Resort",
-    name: "Ocean View Suite",
-    type: "suite",
-    city: "Miami",
-    address: "456 Ocean Drive, Miami, FL 33139",
-    rating: 4.5,
-    price: 299,
-    capacity: 4,
-    image: "/placeholder.svg?height=300&width=500",
-    amenities: ["Free WiFi", "TV", "Air Conditioning", "Private Bathroom", "Ocean View", "Kitchen"],
-  },
-  {
-    id: 103,
-    hotelId: 3,
-    hotelName: "Mountain View Lodge",
-    name: "Standard Room",
-    type: "standard",
-    city: "Denver",
-    address: "789 Mountain Road, Denver, CO 80202",
-    rating: 4.3,
-    price: 149,
-    capacity: 2,
-    image: "/placeholder.svg?height=300&width=500",
-    amenities: ["Free WiFi", "TV", "Air Conditioning", "Private Bathroom"],
-  },
-]
+  getItineraryById,
+  updateItinerary,
+  addScheduleItem,
+  updateScheduleItem,
+  deleteScheduleItem,
+  addRoomToItinerary,
+  updateRoomDates,
+  removeRoomFromItinerary,
+  bookRide,
+  updateRideBooking,
+  cancelRide,
+  toggleDriverService,
+  getAvailableRooms,
+  submitHotelReview,
+} from "../../../api/itineraryApi"
 
 export default function ItineraryDetailPage() {
-//   const params = useParams()
-//   const router = useRouter()
-//   const itineraryId = params.id
   const navigate = useNavigate()
   const { id } = useParams()
-  const itineraryId = id
+  const itineraryId = Number.parseInt(id)
 
+  // State for itinerary data
+  const [itinerary, setItinerary] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [availableRooms, setAvailableRooms] = useState([])
+  const [loadingRooms, setLoadingRooms] = useState(false)
 
-  // In a real app, you would fetch the itinerary data based on the ID
-  const [itinerary, setItinerary] = useState(mockItinerary)
+  // Dialog states
   const [showAddRoomDialog, setShowAddRoomDialog] = useState(false)
   const [showAddActivityDialog, setShowAddActivityDialog] = useState(false)
   const [showEditActivityDialog, setShowEditActivityDialog] = useState(false)
@@ -192,6 +83,7 @@ export default function ItineraryDetailPage() {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false)
   const [showAcceptDialog, setShowAcceptDialog] = useState(false)
 
+  // Selected item states
   const [selectedRoom, setSelectedRoom] = useState(null)
   const [selectedRoomItem, setSelectedRoomItem] = useState(null)
   const [selectedActivity, setSelectedActivity] = useState(null)
@@ -199,6 +91,10 @@ export default function ItineraryDetailPage() {
   const [selectedReviewType, setSelectedReviewType] = useState(null)
   const [currentPaymentIndex, setCurrentPaymentIndex] = useState(0)
 
+  // tab state
+  const [activeTab, setActiveTab] = useState("schedule")
+
+  // Form states
   const [roomBookingDates, setRoomBookingDates] = useState({
     from: null,
     to: null,
@@ -231,153 +127,215 @@ export default function ItineraryDetailPage() {
     cvv: "",
   })
 
+  const fetchItinerary = async () => {
+    try {
+      setLoading(true)
+      const response = await getItineraryById(itineraryId)
+      setItinerary(response.data)
+      console.log("Fetched itinerary:", response.data)
+      setLoading(false)
+    } catch (err) {
+      setError("Failed to load itinerary details")
+      setLoading(false)
+      toast.error("Failed to load itinerary details")
+      console.error(err)
+    }
+  }
+
+  // Fetch itinerary data
+  useEffect(() => {
+
+    if (itineraryId) {
+      fetchItinerary()
+    }
+  }, [itineraryId])
+
+  // Fetch available rooms when adding a room
+  const fetchAvailableRooms = async (startDate, endDate, city, guests) => {
+    try {
+      setLoadingRooms(true)
+      const response = await getAvailableRooms(
+        startDate ? format(startDate, "yyyy-MM-dd") : null,
+        endDate ? format(endDate, "yyyy-MM-dd") : null,
+        city,
+        guests,
+      )
+      setAvailableRooms(response.data)
+      setLoadingRooms(false)
+    } catch (err) {
+      toast.error("Failed to load available rooms")
+      setLoadingRooms(false)
+      console.error(err)
+    }
+  }
+
   // Calculate total accommodation price
   const calculateTotalAccommodationPrice = () => {
-    return itinerary.roomItems.reduce((total, room) => {
-      const days = Math.ceil((room.endDate - room.startDate) / (1000 * 60 * 60 * 24))
-      return total + room.pricePerNight * days
+    if (!itinerary || !itinerary.roomItems || itinerary.roomItems.length === 0) return 0
+
+    return itinerary.roomItems.reduce((total, roomItem) => {
+      // Access basePrice from the nested room object
+      const basePrice = roomItem.room?.basePrice || 0
+
+      const startDate = new Date(roomItem.startDate)
+      const endDate = new Date(roomItem.endDate)
+
+      // Calculate number of nights (not days)
+      // End date - start date gives milliseconds, divide by ms in a day
+      const nights = Math.max(1, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)))
+
+      // Calculate cost for this room
+      const roomCost = basePrice * nights
+
+      return total + roomCost
     }, 0)
   }
 
   // Calculate price for a specific room
   const calculateRoomPrice = (room) => {
-    const days = Math.ceil((room.endDate - room.startDate) / (1000 * 60 * 60 * 24))
-    return room.pricePerNight * days
+    const startDate = new Date(room.startDate)
+    const endDate = new Date(room.endDate)
+    const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24))
+    return room.room.basePrice * days
   }
 
   // Handle adding a room
   const handleAddRoom = (room) => {
     setSelectedRoom(room)
     setRoomBookingDates({
-      from: itinerary.startDate || new Date(),
-      to: addDays(itinerary.startDate || new Date(), 3),
+      from: itinerary?.startDate ? new Date(itinerary.startDate) : new Date(),
+      to: itinerary?.startDate ? addDays(new Date(itinerary.startDate), 3) : addDays(new Date(), 3),
     })
   }
 
-  const confirmAddRoom = () => {
-    // In a real app, you would call an API to add the room to the itinerary
+  const confirmAddRoom = async () => {
+    try {
+      const roomData = {
+        roomId: selectedRoom.id,
+        startDate: format(roomBookingDates.from, "yyyy-MM-dd"),
+        endDate: format(roomBookingDates.to, "yyyy-MM-dd"),
+      }
 
-    const newRoomItem = {
-      id: Date.now(),
-      roomId: selectedRoom.id,
-      hotelId: selectedRoom.hotelId,
-      hotelName: selectedRoom.hotelName,
-      roomName: selectedRoom.name,
-      roomType: selectedRoom.type,
-      city: selectedRoom.city,
-      startDate: roomBookingDates.from,
-      endDate: roomBookingDates.to,
-      image: selectedRoom.image,
-      pricePerNight: selectedRoom.price,
-      capacity: selectedRoom.capacity,
-      isPaid: false,
+      const response = await addRoomToItinerary(itineraryId, roomData)
+
+      // Update the itinerary state with the new room
+      // setItinerary({
+      //   ...itinerary,
+      //   roomItems: [...itinerary.roomItems, response.data],
+      //   destinations: [...new Set([...itinerary.destinations, selectedRoom.city])],
+      // })
+
+      fetchItinerary()
+      // set the tab to accommodations
+      setActiveTab("accommodations")
+
+      setShowAddRoomDialog(false)
+      setSelectedRoom(null)
+
+      toast.success(`${selectedRoom.type} at ${selectedRoom.hotelName} has been added to your itinerary.`)
+    } catch (err) {
+      toast.error("Failed to add room to itinerary")
+      console.error(err)
     }
-
-    setItinerary({
-      ...itinerary,
-      roomItems: [...itinerary.roomItems, newRoomItem],
-      destinations: [...new Set([...itinerary.destinations, selectedRoom.city])],
-    })
-
-    setShowAddRoomDialog(false)
-    setSelectedRoom(null)
-
-    toast({
-      title: "Room Added",
-      description: `${selectedRoom.name} at ${selectedRoom.hotelName} has been added to your itinerary.`,
-    })
   }
 
   // Handle editing a room booking
   const handleEditRoom = (roomItem) => {
     setSelectedRoomItem(roomItem)
     setRoomBookingDates({
-      from: roomItem.startDate,
-      to: roomItem.endDate,
+      from: new Date(roomItem.startDate),
+      to: new Date(roomItem.endDate),
     })
     setShowEditRoomDialog(true)
   }
 
-  const confirmEditRoom = () => {
-    // In a real app, you would call an API to update the room booking
+  const confirmEditRoom = async () => {
+    try {
+      const roomData = {
+        startDate: format(roomBookingDates.from, "yyyy-MM-dd"),
+        endDate: format(roomBookingDates.to, "yyyy-MM-dd"),
+      }
 
-    const updatedRoomItems = itinerary.roomItems.map((item) =>
-      item.id === selectedRoomItem.id
-        ? {
-            ...item,
-            startDate: roomBookingDates.from,
-            endDate: roomBookingDates.to,
-          }
-        : item,
-    )
+      const response = await updateRoomDates(itineraryId, selectedRoomItem.id, roomData)
 
-    setItinerary({
-      ...itinerary,
-      roomItems: updatedRoomItems,
-    })
+      fetchItinerary()
+      setActiveTab("accommodations")
 
-    setShowEditRoomDialog(false)
-    setSelectedRoomItem(null)
+      // Update the itinerary state with the updated room
+      const updatedRoomItems = itinerary.roomItems.map((item) =>
+        item.id === selectedRoomItem.id ? response.data : item,
+      )
 
-    toast({
-      title: "Room Booking Updated",
-      description: `Your booking for ${selectedRoomItem.roomName} has been updated.`,
-    })
+      setItinerary({
+        ...itinerary,
+        roomItems: updatedRoomItems,
+      })
+
+      setShowEditRoomDialog(false)
+      setSelectedRoomItem(null)
+
+      toast.success(`Your booking for ${response.data.roomName} has been updated.`)
+    } catch (err) {
+      toast.error("Failed to update room booking")
+      console.error(err)
+    }
   }
 
   // Handle removing a room
-  const handleRemoveRoom = (roomItemId) => {
-    // In a real app, you would call an API to remove the room from the itinerary
+  const handleRemoveRoom = async (roomItemId) => {
+    try {
+      await removeRoomFromItinerary(itineraryId, roomItemId)
 
-    const updatedRoomItems = itinerary.roomItems.filter((item) => item.id !== roomItemId)
+      const updatedRoomItems = itinerary.roomItems.filter((item) => item.id !== roomItemId)
 
-    // Recalculate destinations based on remaining rooms
-    const destinations = [...new Set(updatedRoomItems.map((item) => item.city))]
+      // Recalculate destinations based on remaining rooms
+      const destinations = [...new Set(updatedRoomItems.map((item) => item.city))]
 
-    setItinerary({
-      ...itinerary,
-      roomItems: updatedRoomItems,
-      destinations,
-    })
+      setItinerary({
+        ...itinerary,
+        roomItems: updatedRoomItems,
+        destinations,
+      })
 
-    toast({
-      title: "Room Removed",
-      description: "The room has been removed from your itinerary.",
-    })
+      toast.success("The room has been removed from your itinerary.")
+    } catch (err) {
+      toast.error("Failed to remove room from itinerary")
+      console.error(err)
+    }
   }
 
   // Handle adding an activity
-  const handleAddActivity = (e) => {
+  const handleAddActivity = async (e) => {
     e.preventDefault()
 
-    // Get form data
-    const activity = {
-      id: Date.now(),
-      startTime: new Date(activityForm.startDateTime),
-      endTime: new Date(activityForm.endDateTime),
-      location: activityForm.location,
-      description: activityForm.description,
+    try {
+      const activityData = {
+        startTime: new Date(activityForm.startDateTime).toISOString(),
+        endTime: new Date(activityForm.endDateTime).toISOString(),
+        location: activityForm.location,
+        description: activityForm.description,
+      }
+
+      const response = await addScheduleItem(itineraryId, activityData)
+
+      setItinerary({
+        ...itinerary,
+        scheduleItems: [...itinerary.scheduleItems, response.data],
+      })
+
+      setShowAddActivityDialog(false)
+      setActivityForm({
+        description: "",
+        location: "",
+        startDateTime: "",
+        endDateTime: "",
+      })
+
+      toast.success(`${activityForm.description} has been added to your itinerary.`)
+    } catch (err) {
+      toast.error("Failed to add activity to itinerary")
+      console.error(err)
     }
-
-    // In a real app, you would call an API to add the activity to the itinerary
-
-    setItinerary({
-      ...itinerary,
-      scheduleItems: [...itinerary.scheduleItems, activity],
-    })
-
-    setShowAddActivityDialog(false)
-    setActivityForm({
-      description: "",
-      location: "",
-      startDateTime: "",
-      endDateTime: "",
-    })
-
-    toast({
-      title: "Activity Added",
-      description: `${activityForm.description} has been added to your itinerary.`,
-    })
   }
 
   // Handle editing an activity
@@ -386,103 +344,103 @@ export default function ItineraryDetailPage() {
     setActivityForm({
       description: activity.description,
       location: activity.location,
-      startDateTime: format(activity.startTime, "yyyy-MM-dd'T'HH:mm"),
-      endDateTime: format(activity.endTime, "yyyy-MM-dd'T'HH:mm"),
+      startDateTime: format(new Date(activity.startTime), "yyyy-MM-dd'T'HH:mm"),
+      endDateTime: format(new Date(activity.endTime), "yyyy-MM-dd'T'HH:mm"),
     })
     setShowEditActivityDialog(true)
   }
 
-  const confirmEditActivity = (e) => {
+  const confirmEditActivity = async (e) => {
     e.preventDefault()
 
-    // In a real app, you would call an API to update the activity
+    try {
+      const activityData = {
+        description: activityForm.description,
+        location: activityForm.location,
+        startTime: new Date(activityForm.startDateTime).toISOString(),
+        endTime: new Date(activityForm.endDateTime).toISOString(),
+      }
 
-    const updatedScheduleItems = itinerary.scheduleItems.map((item) =>
-      item.id === selectedActivity.id
-        ? {
-            ...item,
-            description: activityForm.description,
-            location: activityForm.location,
-            startTime: new Date(activityForm.startDateTime),
-            endTime: new Date(activityForm.endDateTime),
-          }
-        : item,
-    )
+      const response = await updateScheduleItem(itineraryId, selectedActivity.id, activityData)
 
-    setItinerary({
-      ...itinerary,
-      scheduleItems: updatedScheduleItems,
-    })
+      const updatedScheduleItems = itinerary.scheduleItems.map((item) =>
+        item.id === selectedActivity.id ? response.data : item,
+      )
 
-    setShowEditActivityDialog(false)
-    setSelectedActivity(null)
-    setActivityForm({
-      description: "",
-      location: "",
-      startDateTime: "",
-      endDateTime: "",
-    })
+      setItinerary({
+        ...itinerary,
+        scheduleItems: updatedScheduleItems,
+      })
 
-    toast({
-      title: "Activity Updated",
-      description: "Your activity has been updated successfully.",
-    })
+      setShowEditActivityDialog(false)
+      setSelectedActivity(null)
+      setActivityForm({
+        description: "",
+        location: "",
+        startDateTime: "",
+        endDateTime: "",
+      })
+
+      toast.success("Your activity has been updated successfully.")
+    } catch (err) {
+      toast.error("Failed to update activity")
+      console.error(err)
+    }
   }
 
   // Handle removing an activity
-  const handleRemoveActivity = (activityId) => {
-    // In a real app, you would call an API to remove the activity from the itinerary
+  const handleRemoveActivity = async (activityId) => {
+    try {
+      await deleteScheduleItem(itineraryId, activityId)
 
-    setItinerary({
-      ...itinerary,
-      scheduleItems: itinerary.scheduleItems.filter((item) => item.id !== activityId),
-    })
+      setItinerary({
+        ...itinerary,
+        scheduleItems: itinerary.scheduleItems.filter((item) => item.id !== activityId),
+      })
 
-    toast({
-      title: "Activity Removed",
-      description: "The activity has been removed from your itinerary.",
-    })
+      toast.success("The activity has been removed from your itinerary.")
+    } catch (err) {
+      toast.error("Failed to remove activity from itinerary")
+      console.error(err)
+    }
   }
 
   // Handle adding a ride
-  const handleAddRide = (e) => {
+  const handleAddRide = async (e) => {
     e.preventDefault()
 
-    // In a real app, you would call an API to book the ride
+    try {
+      const rideData = {
+        type: rideForm.type,
+        pickupLocation: rideForm.pickupLocation,
+        dropLocation: rideForm.dropoffLocation,
+        pickupTime: new Date(rideForm.pickupDateTime).toISOString(),
+        numberOfPersons: itinerary.numberOfPersons,
+        withDriverService: rideForm.withDriverService,
+        price: rideForm.type === "taxi" ? 65 : 85, // This would be calculated by the backend in a real app
+      }
 
-    const newRide = {
-      id: Date.now(),
-      type: rideForm.type,
-      pickupLocation: rideForm.pickupLocation,
-      dropoffLocation: rideForm.dropoffLocation,
-      pickupTime: new Date(rideForm.pickupDateTime),
-      status: "confirmed",
-      driverName: "To be assigned",
-      driverPhone: "",
-      vehicleInfo: "",
-      price: rideForm.type === "taxi" ? 65 : 85,
-      withDriverService: rideForm.withDriverService,
-      isReviewed: false,
+      const response = await bookRide(itineraryId, rideData)
+
+      setItinerary({
+        ...itinerary,
+        rideBookings: [...itinerary.rideBookings, response.data],
+      })
+
+      setShowAddRideDialog(false)
+      setRideForm({
+        type: "taxi",
+        pickupLocation: "",
+        dropoffLocation: "",
+        pickupDateTime: "",
+        withDriverService: false,
+      })
+
+      toast.success(`Your ${rideForm.type} ride has been booked successfully.`)
+    } catch (err) {
+      toast.error("Failed to book ride")
+      console.error(err)
     }
-
-    setItinerary({
-      ...itinerary,
-      rideBookings: [...itinerary.rideBookings, newRide],
-    })
-
-    setShowAddRideDialog(false)
-    setRideForm({
-      type: "taxi",
-      pickupLocation: "",
-      dropoffLocation: "",
-      pickupDateTime: "",
-      withDriverService: false,
-    })
-
-    toast({
-      title: "Ride Booked",
-      description: `Your ${rideForm.type} ride has been booked successfully.`,
-    })
   }
 
   // Handle editing a ride
@@ -491,87 +449,96 @@ export default function ItineraryDetailPage() {
     setRideForm({
       type: ride.type,
       pickupLocation: ride.pickupLocation,
-      dropoffLocation: ride.dropoffLocation,
-      pickupDateTime: format(ride.pickupTime, "yyyy-MM-dd'T'HH:mm"),
+      dropoffLocation: ride.dropLocation,
+      pickupDateTime: format(new Date(ride.pickupTime), "yyyy-MM-dd'T'HH:mm"),
       withDriverService: ride.withDriverService,
     })
     setShowEditRideDialog(true)
   }
 
-  const confirmEditRide = (e) => {
+  const confirmEditRide = async (e) => {
     e.preventDefault()
 
-    // In a real app, you would call an API to update the ride booking
+    try {
+      const rideData = {
+        type: rideForm.type,
+        pickupLocation: rideForm.pickupLocation,
+        dropLocation: rideForm.dropoffLocation,
+        pickupTime: new Date(rideForm.pickupDateTime).toISOString(),
+        withDriverService: rideForm.withDriverService,
+      }
 
-    const updatedRideBookings = itinerary.rideBookings.map((ride) =>
-      ride.id === selectedRide.id
-        ? {
-            ...ride,
-            type: rideForm.type,
-            pickupLocation: rideForm.pickupLocation,
-            dropoffLocation: rideForm.dropoffLocation,
-            pickupTime: new Date(rideForm.pickupDateTime),
-            withDriverService: rideForm.withDriverService,
-            price: rideForm.type === "taxi" ? 65 : 85,
-          }
-        : ride,
-    )
+      const response = await updateRideBooking(itineraryId, selectedRide.id, rideData)
 
-    setItinerary({
-      ...itinerary,
-      rideBookings: updatedRideBookings,
-    })
+      const updatedRideBookings = itinerary.rideBookings.map((ride) =>
+        ride.id === selectedRide.id ? response.data : ride,
+      )
 
-    setShowEditRideDialog(false)
-    setSelectedRide(null)
-    setRideForm({
-      type: "taxi",
-      pickupLocation: "",
-      dropoffLocation: "",
-      pickupDateTime: "",
-      withDriverService: false,
-    })
+      setItinerary({
+        ...itinerary,
+        rideBookings: updatedRideBookings,
+      })
 
-    toast({
-      title: "Ride Updated",
-      description: "Your ride booking has been updated successfully.",
-    })
+      setShowEditRideDialog(false)
+      setSelectedRide(null)
+      setRideForm({
+        type: "taxi",
+        pickupLocation: "",
+        dropoffLocation: "",
+        pickupDateTime: "",
+        withDriverService: false,
+      })
+
+      toast.success("Your ride booking has been updated successfully.")
+    } catch (err) {
+      toast.error("Failed to update ride booking")
+      console.error(err)
+    }
   }
 
   // Handle canceling a ride
-  const handleCancelRide = (rideId) => {
-    // In a real app, you would call an API to cancel the ride
+  const handleCancelRide = async (rideId) => {
+    try {
+      await cancelRide(itineraryId, rideId)
 
-    const updatedRideBookings = itinerary.rideBookings.map((ride) =>
-      ride.id === rideId ? { ...ride, status: "cancelled" } : ride,
-    )
+      // In this case, we're not removing the ride from the list, just updating its status
+      const updatedRideBookings = itinerary.rideBookings.map((ride) =>
+        ride.id === rideId ? { ...ride, status: "cancelled" } : ride,
+      )
 
-    setItinerary({
-      ...itinerary,
-      rideBookings: updatedRideBookings,
-    })
+      setItinerary({
+        ...itinerary,
+        rideBookings: updatedRideBookings,
+      })
 
-    toast({
-      title: "Ride Cancelled",
-      description: "Your ride has been cancelled successfully.",
-    })
+      toast.success("Your ride has been cancelled successfully.")
+    } catch (err) {
+      toast.error("Failed to cancel ride")
+      console.error(err)
+    }
   }
 
   // Handle driver service confirmation
-  const toggleDriverService = () => {
-    setItinerary({
-      ...itinerary,
-      driverServiceRequested: !itinerary.driverServiceRequested,
-    })
+  const toggleDriverServiceHandler = async () => {
+    try {
+      const response = await toggleDriverService(itineraryId, !itinerary.driverServiceRequested)
 
-    setShowDriverServiceDialog(false)
+      setItinerary({
+        ...itinerary,
+        driverServiceRequested: !itinerary.driverServiceRequested,
+      })
 
-    toast({
-      title: itinerary.driverServiceRequested ? "Driver Service Removed" : "Driver Service Added",
-      description: itinerary.driverServiceRequested
-        ? "Driver service has been removed from your itinerary."
-        : "Driver service has been added to your itinerary.",
-    })
+      setShowDriverServiceDialog(false)
+
+      toast.success(
+        itinerary.driverServiceRequested
+          ? "Driver service has been removed from your itinerary."
+          : "Driver service has been added to your itinerary.",
+      )
+    } catch (err) {
+      toast.error("Failed to update driver service")
+      console.error(err)
+    }
   }
 
   // Handle submitting a review
@@ -584,35 +551,51 @@ export default function ItineraryDetailPage() {
     setShowReviewDialog(true)
   }
 
-  const handleSubmitReview = (e) => {
+  const handleSubmitReview = async (e) => {
     e.preventDefault()
 
-    // In a real app, you would call an API to submit the review
+    try {
+      // For hotel/room reviews
+      if (selectedReviewType.startsWith("room-")) {
+        const roomId = Number.parseInt(selectedReviewType.split("-")[1])
+        const roomItem = itinerary.roomItems.find((room) => room.id === roomId)
 
-    // If it's a ride review, mark the ride as reviewed
-    if (selectedReviewType.startsWith("ride-")) {
-      const rideId = Number.parseInt(selectedReviewType.split("-")[1])
-      const updatedRideBookings = itinerary.rideBookings.map((ride) =>
-        ride.id === rideId ? { ...ride, isReviewed: true } : ride,
-      )
+        if (roomItem) {
+          const reviewData = {
+            hotelId: roomItem.hotelId,
+            rating: reviewForm.rating,
+            description: reviewForm.comment,
+          }
 
-      setItinerary({
-        ...itinerary,
-        rideBookings: updatedRideBookings,
+          await submitHotelReview(reviewData)
+        }
+      }
+
+      // If it's a ride review, mark the ride as reviewed
+      if (selectedReviewType.startsWith("ride-")) {
+        const rideId = Number.parseInt(selectedReviewType.split("-")[1])
+        const updatedRideBookings = itinerary.rideBookings.map((ride) =>
+          ride.id === rideId ? { ...ride, isReviewed: true } : ride,
+        )
+
+        setItinerary({
+          ...itinerary,
+          rideBookings: updatedRideBookings,
+        })
+      }
+
+      toast.success("Your review has been submitted successfully.")
+
+      setShowReviewDialog(false)
+      setSelectedReviewType(null)
+      setReviewForm({
+        rating: 5,
+        comment: "",
       })
+    } catch (err) {
+      toast.error("Failed to submit review")
+      console.error(err)
     }
-
-    toast({
-      title: "Review Submitted",
-      description: `Your review for ${selectedReviewType} has been submitted successfully.`,
-    })
-
-    setShowReviewDialog(false)
-    setSelectedReviewType(null)
-    setReviewForm({
-      rating: 5,
-      comment: "",
-    })
   }
 
   // Handle accepting itinerary
@@ -632,58 +615,97 @@ export default function ItineraryDetailPage() {
     }
   }
 
-  const handlePayment = (e) => {
+  const handlePayment = async (e) => {
     e.preventDefault()
 
-    // In a real app, you would process the payment here
+    try {
+      // In a real app, you would process the payment here
+      // For now, we'll just mark the room as paid
 
-    // Mark the current room as paid
-    const updatedRoomItems = [...itinerary.roomItems]
-    updatedRoomItems[currentPaymentIndex].isPaid = true
+      // Mark the current room as paid
+      const updatedRoomItems = [...itinerary.roomItems]
+      updatedRoomItems[currentPaymentIndex].isPaid = true
 
-    setItinerary({
-      ...itinerary,
-      roomItems: updatedRoomItems,
-    })
-
-    // Check if there are more rooms to pay for
-    if (currentPaymentIndex < itinerary.roomItems.length - 1) {
-      setCurrentPaymentIndex(currentPaymentIndex + 1)
-
-      // Reset payment form for next room
-      setPaymentDetails({
-        cardNumber: "",
-        cardName: "",
-        expiryDate: "",
-        cvv: "",
+      setItinerary({
+        ...itinerary,
+        roomItems: updatedRoomItems,
       })
 
-      toast({
-        title: "Payment Successful",
-        description: `Payment for ${itinerary.roomItems[currentPaymentIndex].roomName} at ${itinerary.roomItems[currentPaymentIndex].hotelName} was successful.`,
-      })
-    } else {
-      // All rooms paid, complete acceptance
-      setShowPaymentDialog(false)
-      completeAcceptance()
+      // Check if there are more rooms to pay for
+      if (currentPaymentIndex < itinerary.roomItems.length - 1) {
+        setCurrentPaymentIndex(currentPaymentIndex + 1)
+
+        // Reset payment form for next room
+        setPaymentDetails({
+          cardNumber: "",
+          cardName: "",
+          expiryDate: "",
+          cvv: "",
+        })
+
+        toast.success(
+          `Payment for ${itinerary.roomItems[currentPaymentIndex].roomName} at ${itinerary.roomItems[currentPaymentIndex].hotelName} was successful.`,
+        )
+      } else {
+        // All rooms paid, complete acceptance
+        setShowPaymentDialog(false)
+        completeAcceptance()
+      }
+    } catch (err) {
+      toast.error("Payment failed")
+      console.error(err)
     }
   }
 
-  const completeAcceptance = () => {
-    // Update itinerary status to accepted
-    setItinerary({
-      ...itinerary,
-      status: "accepted",
-    })
+  const completeAcceptance = async () => {
+    try {
+      // Update itinerary status to accepted
+      const response = await updateItinerary(itineraryId, { status: "accepted" })
 
-    toast({
-      title: "Itinerary Accepted",
-      description: "Your itinerary has been accepted and all payments have been processed.",
-    })
+      setItinerary({
+        ...itinerary,
+        status: "accepted",
+      })
+
+      toast.success("Your itinerary has been accepted and all payments have been processed.")
+    } catch (err) {
+      toast.error("Failed to update itinerary status")
+      console.error(err)
+    }
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-lg">Loading itinerary details...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error || !itinerary) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="text-red-500 text-5xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold mb-2">Error Loading Itinerary</h2>
+          <p className="mb-4">{error || "Itinerary not found"}</p>
+          <Button asChild>
+            <Link to="/customer">Return to Dashboard</Link>
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   // Group schedule items by date
-  const scheduleByDate = itinerary.scheduleItems.reduce((acc, item) => {
+  console.log("itinerary.scheduleItems", itinerary.scheduleItems)
+  console.log("itinerary", itinerary)
+  const scheduleByDate = itinerary.scheduleItems?.reduce((acc, item) => {
     const date = new Date(item.startTime)
     date.setHours(0, 0, 0, 0)
 
@@ -697,7 +719,8 @@ export default function ItineraryDetailPage() {
   }, {})
 
   // Sort dates
-  const sortedDates = Object.keys(scheduleByDate).sort()
+  console.log("scheduleByDate", scheduleByDate)
+  const sortedDates = scheduleByDate && Object.keys(scheduleByDate).sort()
 
   // Format date for display
   const formatDateHeading = (dateStr) => {
@@ -739,7 +762,8 @@ export default function ItineraryDetailPage() {
                 <div className="flex items-center gap-1">
                   <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">
-                    {format(itinerary.startDate, "MMM d")} - {format(itinerary.endDate, "MMM d, yyyy")}
+                    {format(new Date(itinerary.startDate), "MMM d")} -{" "}
+                    {format(new Date(itinerary.endDate), "MMM d, yyyy")}
                   </span>
                 </div>
               )}
@@ -752,7 +776,7 @@ export default function ItineraryDetailPage() {
                   ${itinerary.status === "accepted" ? "bg-purple-500" : ""}
                 `}
               >
-                {itinerary.status.charAt(0).toUpperCase() + itinerary.status.slice(1)}
+                {itinerary?.status?.charAt(0).toUpperCase() + itinerary?.status?.slice(1)}
               </Badge>
 
               {itinerary.driverServiceRequested && (
@@ -794,14 +818,15 @@ export default function ItineraryDetailPage() {
       </div>
 
       <div className="mb-6 flex flex-wrap gap-2">
-        {itinerary.destinations.map((destination) => (
-          <Badge key={destination} variant="secondary" className="text-sm">
-            {destination}
-          </Badge>
-        ))}
+        {itinerary.destinations &&
+          itinerary.destinations.map((destination) => (
+            <Badge key={destination} variant="secondary" className="text-sm">
+              {destination}
+            </Badge>
+          ))}
       </div>
 
-      <Tabs defaultValue="schedule" className="mb-8">
+      <Tabs defaultValue="schedule" value={activeTab} onValueChange={setActiveTab} className="mb-8">
         <TabsList className="mb-4">
           <TabsTrigger value="schedule">Schedule</TabsTrigger>
           <TabsTrigger value="accommodations">Accommodations</TabsTrigger>
@@ -829,14 +854,14 @@ export default function ItineraryDetailPage() {
             </Button>
           </div>
 
-          {sortedDates.length > 0 ? (
+          {sortedDates?.length > 0 ? (
             <div className="space-y-6">
-              {sortedDates.map((dateKey) => (
+              {sortedDates?.map((dateKey) => (
                 <div key={dateKey}>
                   <h3 className="mb-4 text-lg font-semibold">{formatDateHeading(dateKey)}</h3>
 
                   <div className="space-y-4">
-                    {scheduleByDate[dateKey]
+                    {scheduleByDate && scheduleByDate[dateKey]
                       .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))
                       .map((activity) => (
                         <Card key={activity.id}>
@@ -845,9 +870,14 @@ export default function ItineraryDetailPage() {
                               <div>
                                 <div className="mb-2 flex items-center gap-2">
                                   <ClockIcon className="h-4 w-4 text-muted-foreground" />
-                                  <span>
-                                    {format(activity.startTime, "h:mm a")} - {format(activity.endTime, "h:mm a")}
-                                  </span>
+                                  <div className="activity-time">
+                                    <div className="time-range">
+                                      {format(new Date(activity.startTime), "h:mm a")} - {format(new Date(activity.endTime), "h:mm a")}
+                                    </div>
+                                    <div className="date-display text-sm text-gray-500">
+                                      {format(new Date(activity.startTime), "MMM d, yyyy")} - {format(new Date(activity.endTime), "MMM d, yyyy")}
+                                    </div>
+                                  </div>
                                 </div>
 
                                 <h4 className="font-medium">{activity.description}</h4>
@@ -892,22 +922,66 @@ export default function ItineraryDetailPage() {
               <h2 className="text-xl font-bold">Accommodations</h2>
               <p className="text-muted-foreground">Total estimated price: ${calculateTotalAccommodationPrice()}</p>
             </div>
-            <Button onClick={() => setShowAddRoomDialog(true)} className="gap-2">
+            <Button
+              onClick={() => {
+                setShowAddRoomDialog(true)
+                // Fetch available rooms when opening the dialog
+                // itinerary start date is the min of the all schedule items start dates and itinerary end date is the max of the all schedule items end dates
+                const startDate = itinerary.scheduleItems.reduce((min, item) => {
+                  const itemStartDate = new Date(item.startTime)
+                  return itemStartDate < min ? itemStartDate : min
+                }, new Date(itinerary.scheduleItems[0].startTime))
+                const endDate = itinerary.scheduleItems.reduce((max, item) => {
+                  const itemEndDate = new Date(item.endTime)
+                  return itemEndDate > max ? itemEndDate : max
+                }, new Date(itinerary.scheduleItems[0].endTime))
+                fetchAvailableRooms(
+                  startDate,
+                  endDate,
+                  null,
+                  itinerary.numberOfPersons,
+                )
+              }}
+              className="gap-2"
+            >
               <PlusIcon className="h-4 w-4" />
               Add Room
             </Button>
           </div>
 
-          {itinerary.roomItems.length > 0 ? (
+          {itinerary.roomItems && itinerary.roomItems.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {itinerary.roomItems.map((room) => (
                 <Card key={room.id} className="overflow-hidden">
                   <div className="relative h-48">
-                    <img
-                      src={room.image || "/placeholder.svg"}
-                      alt={room.roomName}
-                      className="h-full w-full object-cover"
-                    />
+                    {room.image ? (
+                      <img
+                        src={room.image}
+                        alt={`${room.type} room`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null; // Prevent infinite error loop
+                          e.target.style.display = "none";
+                          e.target.parentNode.classList.add("flex", "items-center", "justify-center");
+                          const fallbackIcon = document.createElement("div");
+                          fallbackIcon.innerHTML = `<div class="flex items-center justify-center h-full w-full">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground">
+                <path d="M2 22v-5l5-5 5 5-5 5z"/>
+                <path d="M9.5 14.5 16 8"/>
+                <path d="M17 2v5h5"/>
+                <path d="M22 7-8.5 15.5"/>
+                <path d="M14 22v-4h-4v4"/>
+                <path d="M18 22V9"/>
+              </svg>
+            </div>`;
+                          e.target.parentNode.appendChild(fallbackIcon);
+                        }}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full w-full">
+                        <Hotel className="h-16 w-16 text-muted-foreground" />
+                      </div>
+                    )}
                     {room.isPaid && (
                       <div className="absolute right-2 top-2">
                         <Badge className="bg-green-500">Paid</Badge>
@@ -917,9 +991,9 @@ export default function ItineraryDetailPage() {
                   <CardHeader className="p-4">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="text-lg font-bold">{room.roomName}</h3>
+                        <h3 className="text-lg font-bold">{room.room.hotel.name}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {room.hotelName}, {room.city}
+                          {room.room.hotel.name}, {room.room.hotel.city}
                         </p>
                       </div>
                       <div className="flex gap-1">
@@ -941,19 +1015,19 @@ export default function ItineraryDetailPage() {
                       <div className="flex items-center gap-2 text-sm">
                         <CalendarIcon className="h-4 w-4 text-muted-foreground" />
                         <span>
-                          {format(room.startDate, "MMM d")} - {format(room.endDate, "MMM d, yyyy")}
+                          {format(new Date(room.startDate), "MMM d")} - {format(new Date(room.endDate), "MMM d, yyyy")}
                         </span>
                       </div>
 
                       <div className="flex items-center gap-2 text-sm">
                         <UsersIcon className="h-4 w-4 text-muted-foreground" />
-                        <span>Capacity: {room.capacity} guests</span>
+                        <span>Capacity: {room.room.roomCapacity} guests</span>
                       </div>
 
                       <div className="flex items-center gap-2 text-sm">
                         <DollarSignIcon className="h-4 w-4 text-muted-foreground" />
                         <span>
-                          ${room.pricePerNight}/night (Total: ${calculateRoomPrice(room)})
+                          ${room.room.basePrice}/night (Total: ${calculateRoomPrice(room)})
                         </span>
                       </div>
                     </div>
@@ -971,7 +1045,7 @@ export default function ItineraryDetailPage() {
                         </Button>
                       )}
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/hotels/${room.hotelId}`}>View Hotel</Link>
+                        <Link to={`/hotels/${room.roomId}`}>View Hotel</Link>
                       </Button>
                     </div>
                   </CardHeader>
@@ -1013,7 +1087,7 @@ export default function ItineraryDetailPage() {
             </Button>
           </div>
 
-          {itinerary.rideBookings.length > 0 ? (
+          {itinerary.rideBookings && itinerary.rideBookings.length > 0 ? (
             <div className="space-y-4">
               {itinerary.rideBookings.map((ride) => (
                 <Card key={ride.id}>
@@ -1032,7 +1106,7 @@ export default function ItineraryDetailPage() {
                           )}
                         </div>
 
-                        <h4 className="font-medium">{format(ride.pickupTime, "MMM d, yyyy h:mm a")}</h4>
+                        <h4 className="font-medium">{format(new Date(ride.pickupTime), "MMM d, yyyy h:mm a")}</h4>
 
                         <div className="mt-2 space-y-1">
                           <div className="flex items-start gap-2 text-sm">
@@ -1047,7 +1121,7 @@ export default function ItineraryDetailPage() {
                             <MapPinIcon className="mt-0.5 h-4 w-4 text-muted-foreground" />
                             <div>
                               <p className="font-medium">Dropoff</p>
-                              <p className="text-muted-foreground">{ride.dropoffLocation}</p>
+                              <p className="text-muted-foreground">{ride.dropLocation}</p>
                             </div>
                           </div>
                         </div>
@@ -1133,36 +1207,42 @@ export default function ItineraryDetailPage() {
                       </Button>
                     </div>
 
-                    {itinerary.roomItems.map((room) => (
-                      <div key={room.id} className="flex justify-between rounded-lg border p-4">
-                        <div>
-                          <h4 className="font-medium">{room.roomName}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {room.hotelName}, {room.city}
-                          </p>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={() => handleOpenReviewDialog(`room-${room.id}`)}>
-                          Write Review
-                        </Button>
-                      </div>
-                    ))}
-
-                    {itinerary.rideBookings
-                      .filter((ride) => ride.status !== "cancelled" && !ride.isReviewed)
-                      .map((ride) => (
-                        <div key={ride.id} className="flex justify-between rounded-lg border p-4">
+                    {itinerary.roomItems &&
+                      itinerary.roomItems.map((room) => (
+                        <div key={room.id} className="flex justify-between rounded-lg border p-4">
                           <div>
-                            <h4 className="font-medium">Ride Service</h4>
+                            <h4 className="font-medium">{room.roomName}</h4>
                             <p className="text-sm text-muted-foreground">
-                              {ride.type.charAt(0).toUpperCase() + ride.type.slice(1)} -{" "}
-                              {format(ride.pickupTime, "MMM d, yyyy")}
+                              {room.hotelName}, {room.city}
                             </p>
                           </div>
-                          <Button variant="outline" size="sm" onClick={() => handleOpenReviewDialog(`ride-${ride.id}`)}>
+                          <Button variant="outline" size="sm" onClick={() => handleOpenReviewDialog(`room-${room.id}`)}>
                             Write Review
                           </Button>
                         </div>
                       ))}
+
+                    {itinerary.rideBookings &&
+                      itinerary.rideBookings
+                        .filter((ride) => ride.status !== "cancelled" && !ride.isReviewed)
+                        .map((ride) => (
+                          <div key={ride.id} className="flex justify-between rounded-lg border p-4">
+                            <div>
+                              <h4 className="font-medium">Ride Service</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {ride.type.charAt(0).toUpperCase() + ride.type.slice(1)} -{" "}
+                                {format(new Date(ride.pickupTime), "MMM d, yyyy")}
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenReviewDialog(`ride-${ride.id}`)}
+                            >
+                              Write Review
+                            </Button>
+                          </div>
+                        ))}
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center">
@@ -1182,63 +1262,63 @@ export default function ItineraryDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {itinerary.roomItems.map((room) => (
-                    <Accordion key={room.id} type="single" collapsible className="border rounded-lg">
-                      <AccordionItem value="reviews">
-                        <AccordionTrigger className="px-4">
-                          <div className="flex items-center gap-2">
-                            <span>
-                              {room.hotelName} - {room.roomName}
-                            </span>
-                            <Badge variant="outline">4.7 ★</Badge>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="px-4 pb-4">
-                          <div className="space-y-3">
-                            <div className="rounded-md bg-muted p-3">
-                              <div className="flex items-center justify-between">
-                                <p className="font-medium">Sarah J.</p>
-                                <div className="flex">
-                                  {[1, 2, 3, 4, 5].map((star) => (
-                                    <StarIcon
-                                      key={star}
-                                      className={`h-4 w-4 ${star <= 5 ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted"}`}
-                                    />
-                                  ))}
-                                </div>
-                              </div>
-                              <p className="mt-1 text-sm">
-                                Excellent room with amazing views. The staff was very friendly and accommodating.
-                              </p>
+                  {itinerary.roomItems && itinerary.roomItems.length > 0 ? (
+                    itinerary.roomItems.map((room) => (
+                      <Accordion key={room.id} type="single" collapsible className="border rounded-lg">
+                        <AccordionItem value="reviews">
+                          <AccordionTrigger className="px-4">
+                            <div className="flex items-center gap-2">
+                              <span>
+                                {room.hotelName} - {room.roomName}
+                              </span>
+                              <Badge variant="outline">4.7 ★</Badge>
                             </div>
-
-                            <div className="rounded-md bg-muted p-3">
-                              <div className="flex items-center justify-between">
-                                <p className="font-medium">Michael T.</p>
-                                <div className="flex">
-                                  {[1, 2, 3, 4].map((star) => (
-                                    <StarIcon
-                                      key={star}
-                                      className={`h-4 w-4 ${star <= 4 ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted"}`}
-                                    />
-                                  ))}
+                          </AccordionTrigger>
+                          <AccordionContent className="px-4 pb-4">
+                            <div className="space-y-3">
+                              <div className="rounded-md bg-muted p-3">
+                                <div className="flex items-center justify-between">
+                                  <p className="font-medium">Sarah J.</p>
+                                  <div className="flex">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <StarIcon
+                                        key={star}
+                                        className={`h-4 w-4 ${star <= 5 ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted"}`}
+                                      />
+                                    ))}
+                                  </div>
                                 </div>
+                                <p className="mt-1 text-sm">
+                                  Excellent room with amazing views. The staff was very friendly and accommodating.
+                                </p>
                               </div>
-                              <p className="mt-1 text-sm">
-                                Great location and comfortable room. The breakfast could be improved.
-                              </p>
+
+                              <div className="rounded-md bg-muted p-3">
+                                <div className="flex items-center justify-between">
+                                  <p className="font-medium">Michael T.</p>
+                                  <div className="flex">
+                                    {[1, 2, 3, 4].map((star) => (
+                                      <StarIcon
+                                        key={star}
+                                        className={`h-4 w-4 ${star <= 4 ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted"}`}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                                <p className="mt-1 text-sm">
+                                  Great location and comfortable room. The breakfast could be improved.
+                                </p>
+                              </div>
+
+                              <Button variant="outline" size="sm" className="w-full" asChild>
+                                <Link to={`/hotels/${room.roomId}?tab=reviews`}>View All Reviews</Link>
+                              </Button>
                             </div>
-
-                            <Button variant="outline" size="sm" className="w-full" asChild>
-                              <Link to={`/hotels/${room.hotelId}?tab=reviews`}>View All Reviews</Link>
-                            </Button>
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  ))}
-
-                  {itinerary.roomItems.length === 0 && (
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    ))
+                  ) : (
                     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center">
                       <StarIcon className="mb-2 h-8 w-8 text-muted-foreground" />
                       <h4 className="text-lg font-medium">No reviews to display</h4>
@@ -1319,7 +1399,7 @@ export default function ItineraryDetailPage() {
               <div className="mb-4 rounded-md bg-muted p-3">
                 <div className="flex justify-between">
                   <span>Price per night:</span>
-                  <span>${selectedRoom.price}</span>
+                  <span>${selectedRoom.basePrice}</span>
                 </div>
                 {roomBookingDates.from && roomBookingDates.to && (
                   <>
@@ -1331,7 +1411,7 @@ export default function ItineraryDetailPage() {
                       <span>Total:</span>
                       <span>
                         $
-                        {selectedRoom.price *
+                        {selectedRoom.basePrice *
                           Math.ceil((roomBookingDates.to - roomBookingDates.from) / (1000 * 60 * 60 * 24))}
                       </span>
                     </div>
@@ -1350,29 +1430,40 @@ export default function ItineraryDetailPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 py-4 md:grid-cols-2">
-              {mockAvailableRooms.map((room) => (
-                <Card key={room.id} className="cursor-pointer overflow-hidden" onClick={() => handleAddRoom(room)}>
-                  <div className="grid grid-cols-3">
-                    <div className="h-full">
-                      <img
-                        src={room.image || "/placeholder.svg"}
-                        alt={room.name}
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div className="col-span-2 p-4">
-                      <h3 className="font-bold">{room.name}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {room.hotelName}, {room.city}
-                      </p>
-                      <div className="mt-2 space-y-1 text-sm">
-                        <p>Capacity: {room.capacity} guests</p>
-                        <p>${room.price}/night</p>
+              {loadingRooms ? (
+                <div className="col-span-2 flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : availableRooms.length > 0 ? (
+                availableRooms.map((room) => (
+                  <Card key={room.id} className="cursor-pointer overflow-hidden" onClick={() => handleAddRoom(room)}>
+                    <div className="grid grid-cols-3">
+                      <div className="h-full">
+                        <img
+                          src={room.image || "/placeholder.svg"}
+                          alt={room.type}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="col-span-2 p-4">
+                        <h3 className="font-bold">{room.type.charAt(0).toUpperCase() + room.type.slice(1)} Room</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {room.hotelName}, {room.city}
+                        </p>
+                        <div className="mt-2 space-y-1 text-sm">
+                          <p>Capacity: {room.roomCapacity} guests</p>
+                          <p>${room.basePrice}/night</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                ))
+              ) : (
+                <div className="col-span-2 flex flex-col items-center justify-center py-8 text-center">
+                  <p className="mb-2 text-lg font-medium">No available rooms found</p>
+                  <p className="text-sm text-muted-foreground">Try adjusting your search criteria or dates</p>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
@@ -1392,11 +1483,34 @@ export default function ItineraryDetailPage() {
             <div className="py-4">
               <div className="mb-4">
                 <div className="h-40 w-full overflow-hidden rounded-md">
-                  <img
-                    src={selectedRoomItem.image || "/placeholder.svg"}
-                    alt={selectedRoomItem.roomName}
-                    className="h-full w-full object-cover"
-                  />
+                  {selectedRoomItem.image ? (
+                    <img
+                      src={selectedRoomItem.image}
+                      alt={`${selectedRoomItem.type} selectedRoomItem`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null; // Prevent infinite error loop
+                        e.target.style.display = "none";
+                        e.target.parentNode.classList.add("flex", "items-center", "justify-center");
+                        const fallbackIcon = document.createElement("div");
+                        fallbackIcon.innerHTML = `<div class="flex items-center justify-center h-full w-full">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground">
+                <path d="M2 22v-5l5-5 5 5-5 5z"/>
+                <path d="M9.5 14.5 16 8"/>
+                <path d="M17 2v5h5"/>
+                <path d="M22 7-8.5 15.5"/>
+                <path d="M14 22v-4h-4v4"/>
+                <path d="M18 22V9"/>
+              </svg>
+            </div>`;
+                        e.target.parentNode.appendChild(fallbackIcon);
+                      }}
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full w-full">
+                      <Hotel className="h-16 w-16 text-muted-foreground" />
+                    </div>
+                  )}
                 </div>
                 <div className="mt-2">
                   <h3 className="text-lg font-bold">{selectedRoomItem.roomName}</h3>
@@ -1447,7 +1561,7 @@ export default function ItineraryDetailPage() {
               <div className="mb-4 rounded-md bg-muted p-3">
                 <div className="flex justify-between">
                   <span>Price per night:</span>
-                  <span>${selectedRoomItem.pricePerNight}</span>
+                  <span>${selectedRoomItem.room.basePrice}</span>
                 </div>
                 {roomBookingDates.from && roomBookingDates.to && (
                   <>
@@ -1459,7 +1573,7 @@ export default function ItineraryDetailPage() {
                       <span>Total:</span>
                       <span>
                         $
-                        {selectedRoomItem.pricePerNight *
+                        {selectedRoomItem.room.basePrice *
                           Math.ceil((roomBookingDates.to - roomBookingDates.from) / (1000 * 60 * 60 * 24))}
                       </span>
                     </div>
@@ -1864,7 +1978,10 @@ export default function ItineraryDetailPage() {
               <p className="text-lg">$120 per day</p>
               <p className="text-sm text-muted-foreground">
                 Total for your trip: $
-                {120 * Math.ceil((itinerary.endDate - itinerary.startDate) / (1000 * 60 * 60 * 24))}
+                {itinerary.startDate && itinerary.endDate
+                  ? 120 *
+                  Math.ceil((new Date(itinerary.endDate) - new Date(itinerary.startDate)) / (1000 * 60 * 60 * 24))
+                  : 0}
               </p>
             </div>
           </div>
@@ -1875,7 +1992,7 @@ export default function ItineraryDetailPage() {
             </Button>
             <Button
               variant={itinerary.driverServiceRequested ? "destructive" : "default"}
-              onClick={toggleDriverService}
+              onClick={toggleDriverServiceHandler}
             >
               {itinerary.driverServiceRequested ? "Remove Driver Service" : "Add Driver Service"}
             </Button>
@@ -1910,9 +2027,8 @@ export default function ItineraryDetailPage() {
                       onClick={() => setReviewForm({ ...reviewForm, rating: star })}
                     >
                       <StarIcon
-                        className={`h-6 w-6 ${
-                          star <= reviewForm.rating ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted"
-                        }`}
+                        className={`h-6 w-6 ${star <= reviewForm.rating ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted"
+                          }`}
                       />
                     </button>
                   ))}
@@ -1956,30 +2072,32 @@ export default function ItineraryDetailPage() {
             <div className="mb-4 rounded-md bg-muted p-4">
               <h3 className="mb-2 font-medium">Itinerary Summary:</h3>
               <ul className="space-y-2 text-sm">
+                {itinerary.startDate && itinerary.endDate && (
+                  <li className="flex items-start gap-2">
+                    <CheckIcon className="mt-0.5 h-4 w-4 text-green-500" />
+                    <div>
+                      <span className="font-medium">Dates:</span> {format(new Date(itinerary.startDate), "MMM d")} -{" "}
+                      {format(new Date(itinerary.endDate), "MMM d, yyyy")}
+                    </div>
+                  </li>
+                )}
                 <li className="flex items-start gap-2">
                   <CheckIcon className="mt-0.5 h-4 w-4 text-green-500" />
                   <div>
-                    <span className="font-medium">Dates:</span> {format(itinerary.startDate, "MMM d")} -{" "}
-                    {format(itinerary.endDate, "MMM d, yyyy")}
+                    <span className="font-medium">Accommodations:</span> {itinerary.roomItems?.length || 0} rooms
                   </div>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckIcon className="mt-0.5 h-4 w-4 text-green-500" />
                   <div>
-                    <span className="font-medium">Accommodations:</span> {itinerary.roomItems.length} rooms
-                  </div>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckIcon className="mt-0.5 h-4 w-4 text-green-500" />
-                  <div>
-                    <span className="font-medium">Activities:</span> {itinerary.scheduleItems.length} activities
+                    <span className="font-medium">Activities:</span> {itinerary.scheduleItems?.length || 0} activities
                   </div>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckIcon className="mt-0.5 h-4 w-4 text-green-500" />
                   <div>
                     <span className="font-medium">Transportation:</span>{" "}
-                    {itinerary.rideBookings.filter((ride) => ride.status === "confirmed").length} rides
+                    {itinerary.rideBookings?.filter((ride) => ride.status === "confirmed").length || 0} rides
                   </div>
                 </li>
                 {itinerary.driverServiceRequested && (
@@ -2005,10 +2123,16 @@ export default function ItineraryDetailPage() {
                   <span>Accommodation Total:</span>
                   <span>${calculateTotalAccommodationPrice()}</span>
                 </div>
-                {itinerary.driverServiceRequested && (
+                {itinerary.driverServiceRequested && itinerary.startDate && itinerary.endDate && (
                   <div className="flex justify-between">
                     <span>Driver Service:</span>
-                    <span>${120 * Math.ceil((itinerary.endDate - itinerary.startDate) / (1000 * 60 * 60 * 24))}</span>
+                    <span>
+                      $
+                      {120 *
+                        Math.ceil(
+                          (new Date(itinerary.endDate) - new Date(itinerary.startDate)) / (1000 * 60 * 60 * 24),
+                        )}
+                    </span>
                   </div>
                 )}
                 <div className="flex justify-between">
@@ -2016,8 +2140,8 @@ export default function ItineraryDetailPage() {
                   <span>
                     $
                     {itinerary.rideBookings
-                      .filter((ride) => ride.status === "confirmed")
-                      .reduce((total, ride) => total + ride.price, 0)}
+                      ?.filter((ride) => ride.status === "confirmed")
+                      .reduce((total, ride) => total + ride.price, 0) || 0}
                   </span>
                 </div>
                 <Separator />
@@ -2026,12 +2150,15 @@ export default function ItineraryDetailPage() {
                   <span>
                     $
                     {calculateTotalAccommodationPrice() +
-                      (itinerary.driverServiceRequested
-                        ? 120 * Math.ceil((itinerary.endDate - itinerary.startDate) / (1000 * 60 * 60 * 24))
+                      (itinerary.driverServiceRequested && itinerary.startDate && itinerary.endDate
+                        ? 120 *
+                        Math.ceil(
+                          (new Date(itinerary.endDate) - new Date(itinerary.startDate)) / (1000 * 60 * 60 * 24),
+                        )
                         : 0) +
-                      itinerary.rideBookings
-                        .filter((ride) => ride.status === "confirmed")
-                        .reduce((total, ride) => total + ride.price, 0)}
+                      (itinerary.rideBookings
+                        ?.filter((ride) => ride.status === "confirmed")
+                        .reduce((total, ride) => total + ride.price, 0) || 0)}
                   </span>
                 </div>
               </div>
@@ -2053,12 +2180,13 @@ export default function ItineraryDetailPage() {
           <DialogHeader>
             <DialogTitle>Payment</DialogTitle>
             <DialogDescription>
-              {itinerary.roomItems[currentPaymentIndex] &&
+              {itinerary.roomItems &&
+                itinerary.roomItems[currentPaymentIndex] &&
                 `Payment ${currentPaymentIndex + 1} of ${itinerary.roomItems.length}: ${itinerary.roomItems[currentPaymentIndex].roomName} at ${itinerary.roomItems[currentPaymentIndex].hotelName}`}
             </DialogDescription>
           </DialogHeader>
 
-          {itinerary.roomItems[currentPaymentIndex] && (
+          {itinerary.roomItems && itinerary.roomItems[currentPaymentIndex] && (
             <form onSubmit={handlePayment}>
               <div className="grid gap-4 py-4">
                 <div className="mb-4 rounded-md bg-muted p-3 text-sm">
@@ -2068,8 +2196,8 @@ export default function ItineraryDetailPage() {
                     {itinerary.roomItems[currentPaymentIndex].hotelName}
                   </p>
                   <p className="text-muted-foreground">
-                    {format(itinerary.roomItems[currentPaymentIndex].startDate, "MMM d, yyyy")} -{" "}
-                    {format(itinerary.roomItems[currentPaymentIndex].endDate, "MMM d, yyyy")}
+                    {format(new Date(itinerary.roomItems[currentPaymentIndex].startDate), "MMM d, yyyy")} -{" "}
+                    {format(new Date(itinerary.roomItems[currentPaymentIndex].endDate), "MMM d, yyyy")}
                   </p>
                   <p className="mt-2 font-medium">
                     Total: ${calculateRoomPrice(itinerary.roomItems[currentPaymentIndex])}
@@ -2147,4 +2275,3 @@ export default function ItineraryDetailPage() {
     </div>
   )
 }
-

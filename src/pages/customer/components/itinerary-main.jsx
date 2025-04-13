@@ -587,30 +587,6 @@ function ItineraryCard({ itinerary, onDelete }) {
             </span>
           </div>
         )}
-
-        <div className="space-y-2">
-          <p className="text-sm font-medium">Accommodations:</p>
-          {Array.isArray(itinerary.room_items) && itinerary.room_items.length > 0 ? (
-            <div className="space-y-1">
-              {itinerary.room_items.slice(0, 2).map((item, index) => (
-                <div key={item?.id || `room-${index}`} className="flex items-center gap-2 text-sm">
-                  <MapPinIcon className="h-4 w-4 text-muted-foreground" />
-                  <span>
-                    {item?.hotelName || item?.hotel?.name || "Unknown Hotel"}, 
-                    {item?.city || item?.hotel?.city || "Unknown Location"}
-                  </span>
-                </div>
-              ))}
-              {itinerary.room_items.length > 2 && (
-                <div className="text-sm text-muted-foreground">
-                  +{itinerary.room_items.length - 2} more accommodations
-                </div>
-              )}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No accommodations added yet</p>
-          )}
-        </div>
       </CardContent>
 
       <CardFooter>

@@ -69,6 +69,10 @@ export const getDrivers = async () => {
     return await API.get('/admin/drivers');
 }
 
+export const getDriver = async (driverId) => {
+    return await API.get(`/admin/drivers/${driverId}`);
+}
+
 export const addDriver = async (driverData) => {    
     return await API.post('/admin/drivers', driverData);
 }

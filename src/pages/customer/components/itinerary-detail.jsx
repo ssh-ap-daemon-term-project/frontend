@@ -59,6 +59,8 @@ import {
   submitHotelReview,
 } from "../../../api/itineraryApi"
 
+import { bookRoom } from "../../../api/customer"
+
 export default function ItineraryDetailPage() {
   const navigate = useNavigate()
   const { id } = useParams()
@@ -132,7 +134,6 @@ export default function ItineraryDetailPage() {
       setLoading(true)
       const response = await getItineraryById(itineraryId)
       setItinerary(response.data)
-      console.log("Fetched itinerary:", response.data)
       setLoading(false)
     } catch (err) {
       setError("Failed to load itinerary details")
@@ -402,6 +403,39 @@ export default function ItineraryDetailPage() {
     } catch (err) {
       toast.error("Failed to remove activity from itinerary")
       console.error(err)
+    }
+  }
+
+  /**
+ * Books a room from an itinerary item
+ * @param {number} roomItemId - The ID of the room item in the itinerary
+ * @param {number} numberOfPersons - Number of persons staying in the room
+ * @param {number} customerId - The customer's ID
+ * @returns {Promise} - Promise with booking details or error
+ */
+  async function handleBookRoom(room) {
+    try {
+      // Extract parameters from the room object and itinerary
+      const roomItemId = room.id;
+      const numberOfPersons = itinerary.numberOfPersons;
+      const customerId = itinerary.customerId;
+  
+      // Call the API function
+      const response = await bookRoom(roomItemId, numberOfPersons, customerId);
+      
+      // Handle successful response
+      toast.success('Room booked successfully');
+      
+      // Refresh the itinerary to get the updated booking status
+      fetchItinerary();
+      
+      return response.data;
+    } catch (error) {
+      // Handle error properly
+      const errorMessage = error.response?.data?.detail || 'Failed to book room';
+      toast.error(errorMessage);
+      console.error('Error booking room:', error);
+      throw error;
     }
   }
 
@@ -703,8 +737,6 @@ export default function ItineraryDetailPage() {
   }
 
   // Group schedule items by date
-  console.log("itinerary.scheduleItems", itinerary.scheduleItems)
-  console.log("itinerary", itinerary)
   const scheduleByDate = itinerary.scheduleItems?.reduce((acc, item) => {
     const date = new Date(item.startTime)
     date.setHours(0, 0, 0, 0)
@@ -719,7 +751,6 @@ export default function ItineraryDetailPage() {
   }, {})
 
   // Sort dates
-  console.log("scheduleByDate", scheduleByDate)
   const sortedDates = scheduleByDate && Object.keys(scheduleByDate).sort()
 
   // Format date for display
@@ -982,11 +1013,15 @@ export default function ItineraryDetailPage() {
                         <Hotel className="h-16 w-16 text-muted-foreground" />
                       </div>
                     )}
-                    {room.isPaid && (
+                    {room.isPaid ? (
                       <div className="absolute right-2 top-2">
-                        <Badge className="bg-green-500">Paid</Badge>
+                        <Badge className="bg-green-500">Booked</Badge>
                       </div>
-                    )}
+                    ) :
+                      <div className="absolute right-2 top-2">
+                        <Badge className="bg-red-500">Not Booked</Badge>
+                      </div>
+                    }
                   </div>
                   <CardHeader className="p-4">
                     <div className="flex items-start justify-between">
@@ -1046,6 +1081,9 @@ export default function ItineraryDetailPage() {
                       )}
                       <Button variant="outline" size="sm" asChild>
                         <Link to={`/hotels/${room.roomId}`}>View Hotel</Link>
+                      </Button>
+                      <Button size="sm" onClick={() => handleBookRoom(room)} disabled={room.isPaid}>
+                        Book Room
                       </Button>
                     </div>
                   </CardHeader>
@@ -1453,6 +1491,55 @@ export default function ItineraryDetailPage() {
                         <div className="mt-2 space-y-1 text-sm">
                           <p>Capacity: {room.roomCapacity} guests</p>
                           <p>${room.basePrice}/night</p>
+
+                          {/* Availability calendar section */}
+                          <div className="mt-3">
+                            <p className="text-xs font-medium text-muted-foreground mb-1">Room availability:</p>
+                            <div className="border rounded overflow-hidden">
+                              <div className="grid grid-cols-7 bg-muted text-xs font-medium p-1">
+                                <div className="text-center">S</div>
+                                <div className="text-center">M</div>
+                                <div className="text-center">T</div>
+                                <div className="text-center">W</div>
+                                <div className="text-center">T</div>
+                                <div className="text-center">F</div>
+                                <div className="text-center">S</div>
+                              </div>
+                              <div className="grid grid-cols-7 gap-1 p-1 max-h-28 overflow-y-auto">
+                                {room.availableRoomsList && room.availableRoomsList.map((count, index) => (
+                                  <div
+                                    key={index}
+                                    className={`aspect-square flex items-center justify-center text-xs font-medium rounded
+                                      ${count > 0
+                                        ? count > room.totalNumber / 2
+                                          ? 'bg-green-100 text-green-800'
+                                          : 'bg-amber-100 text-amber-800'
+                                        : 'bg-red-100 text-red-800'
+                                      }`}
+                                    title={`${format(addDays(new Date(itinerary.startDate), index), "MMM d")}\nDay ${index + 1}: ${count} rooms available`}
+                                  >
+                                    {count}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            {room.availableRoomsList && room.availableRoomsList.length > 0 && (
+                              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <div className="w-3 h-3 rounded-full bg-green-100"></div>
+                                  <span>Good</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <div className="w-3 h-3 rounded-full bg-amber-100"></div>
+                                  <span>Limited</span>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <div className="w-3 h-3 rounded-full bg-red-100"></div>
+                                  <span>Unavailable</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>

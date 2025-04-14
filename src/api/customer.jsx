@@ -40,3 +40,13 @@ const API = axios.create({
 // export const getItineraryItems = async (itineraryId) => {
 //     return await API.get(`/itineraries/${itineraryId}/items`);
 // };
+
+// book room
+// Book a room
+export const bookRoom = async (roomItemId, numberOfPersons, customerId) => {
+    return await API.post('/customer/book-room', {
+        room_item_id: roomItemId,
+        number_of_persons: numberOfPersons,
+        customer_id: customerId
+    });
+};

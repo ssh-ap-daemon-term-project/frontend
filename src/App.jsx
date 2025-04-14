@@ -20,6 +20,7 @@ import { Edit } from 'lucide-react';
 import EditItineraryPage from './pages/customer/components/itinerary-edit';
 import ProfilePage from './pages/customer/components/cust-profile';
 import CustomerDashboard from './pages/customer/customer-page';
+import DriverDashboard from './pages/driver/driver-page';
 import AdminChat from './pages/admin/components/admin-chat';
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/hotel" element={<HotelDashboard />} />
         <Route path="/customer" element={<CustomerDashboard />} />
+        <Route path="/driver" element={<DriverDashboard />} />
         <Route path="/hotel/profile" element={<HotelProfile />} />
         <Route path="/itineraries/:id" element={<ItineraryDetailPage />} />
       </Routes>

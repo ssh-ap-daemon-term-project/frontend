@@ -28,7 +28,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
-import { getDrivers, addDriver, updateDriver, deleteDriver, getDriverRideBookings } from "@/api/admin"
+import { getDriver, getDrivers, addDriver, updateDriver, deleteDriver, getDriverRideBookings } from "@/api/admin"
 import { format } from "date-fns"
 
 const DriverManagement = () => {
@@ -45,6 +45,7 @@ const DriverManagement = () => {
     const [expandedDriverDetails, setExpandedDriverDetails] = useState(null)
     const [isLoadingDetails, setIsLoadingDetails] = useState(false)
     const [newDriver, setNewDriver] = useState({
+        username: "",
         name: "",
         email: "",
         password: "",
@@ -67,14 +68,15 @@ const DriverManagement = () => {
             return
         }
 
-        const filtered = drivers.filter(driver => 
+        const filtered = drivers.filter(driver =>
+            (driver.username?.toLowerCase().includes(searchQuery.toLowerCase()) || '') ||
             driver.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             driver.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
             driver.phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
             driver.carModel.toLowerCase().includes(searchQuery.toLowerCase()) ||
             driver.carNumber.toLowerCase().includes(searchQuery.toLowerCase())
         )
-        
+
         setFilteredDrivers(filtered)
     }, [searchQuery, drivers])
 
@@ -95,32 +97,32 @@ const DriverManagement = () => {
 
     const toggleExpandDriver = async (driverId) => {
         if (expandedDriverId === driverId) {
-            setExpandedDriverId(null)
-            setExpandedDriverDetails(null)
-            return
+            setExpandedDriverId(null);
+            setExpandedDriverDetails(null);
+            return;
         }
-
-        setExpandedDriverId(driverId)
-        setIsLoadingDetails(true)
-
+    
+        setExpandedDriverId(driverId);
+        setIsLoadingDetails(true);
+    
         try {
-            // Find the current driver
-            const driver = drivers.find(d => d.id === driverId)
+            // Get the current driver with totalCompletedRides
+            const driverResponse = await getDriver(driverId);
             
             // Fetch ride bookings
-            const rideBookingsResponse = await getDriverRideBookings(driverId)
-
+            const rideBookingsResponse = await getDriverRideBookings(driverId);
+    
             setExpandedDriverDetails({
-                driver: driver,
+                driver: driverResponse.data,
                 rideBookings: rideBookingsResponse.data
-            })
+            });
         } catch (error) {
-            toast.error("Failed to fetch driver details")
-            setExpandedDriverId(null)
+            toast.error("Failed to fetch driver details");
+            setExpandedDriverId(null);
         } finally {
-            setIsLoadingDetails(false)
+            setIsLoadingDetails(false);
         }
-    }
+    };
 
     const handleDeleteClick = (driver) => {
         setDriverToDelete(driver)
@@ -142,15 +144,15 @@ const DriverManagement = () => {
     }
 
     const handleEditClick = (driver) => {
-        setDriverToEdit({...driver})
+        setDriverToEdit({ ...driver })
         setEditDialogOpen(true)
     }
 
     const handleEditSave = async () => {
         try {
             await updateDriver(driverToEdit.id, driverToEdit)
-            setDrivers(prevDrivers => 
-                prevDrivers.map(driver => 
+            setDrivers(prevDrivers =>
+                prevDrivers.map(driver =>
                     driver.id === driverToEdit.id ? driverToEdit : driver
                 )
             )
@@ -166,7 +168,7 @@ const DriverManagement = () => {
         try {
             const response = await addDriver(newDriver)
             const addedDriver = response.data
-            
+
             setDrivers(prevDrivers => [...prevDrivers, addedDriver])
             toast.success("Driver added successfully")
             setAddDialogOpen(false)
@@ -238,7 +240,6 @@ const DriverManagement = () => {
                                     <TableHead>Contact</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>Joined</TableHead>
-                                    <TableHead>Rating</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -254,9 +255,9 @@ const DriverManagement = () => {
                                         <>
                                             <TableRow key={driver.id}>
                                                 <TableCell>
-                                                    <Button 
-                                                        variant="ghost" 
-                                                        size="icon" 
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
                                                         onClick={() => toggleExpandDriver(driver.id)}
                                                         aria-label={expandedDriverId === driver.id ? "Collapse details" : "Expand details"}
                                                     >
@@ -288,12 +289,6 @@ const DriverManagement = () => {
                                                     <StatusBadge status={driver.status} />
                                                 </TableCell>
                                                 <TableCell>{driver.joinedDate}</TableCell>
-                                                <TableCell>
-                                                    <div className="flex items-center">
-                                                        {driver.rating || "N/A"}
-                                                        {driver.rating && <span className="ml-1 text-yellow-500">★</span>}
-                                                    </div>
-                                                </TableCell>
                                                 <TableCell className="text-right">
                                                     <Button variant="ghost" size="icon" onClick={() => handleEditClick(driver)}>
                                                         <Edit className="h-4 w-4" />
@@ -315,11 +310,11 @@ const DriverManagement = () => {
                                                                 <Tabs defaultValue="details">
                                                                     <TabsList>
                                                                         <TabsTrigger value="details">
-                                                                            <User className="h-4 w-4 mr-2" /> 
+                                                                            <User className="h-4 w-4 mr-2" />
                                                                             Personal Details
                                                                         </TabsTrigger>
                                                                         <TabsTrigger value="ride-bookings">
-                                                                            <Car className="h-4 w-4 mr-2" /> 
+                                                                            <Car className="h-4 w-4 mr-2" />
                                                                             Ride Bookings
                                                                         </TabsTrigger>
                                                                     </TabsList>
@@ -330,6 +325,10 @@ const DriverManagement = () => {
                                                                                 <div>
                                                                                     <h3 className="text-lg font-semibold mb-4">Personal Information</h3>
                                                                                     <div className="grid grid-cols-1 gap-3">
+                                                                                        <div>
+                                                                                            <span className="text-muted-foreground">Username:</span>
+                                                                                            <p className="font-medium">{expandedDriverDetails?.driver?.username || "N/A"}</p>
+                                                                                        </div>
                                                                                         <div>
                                                                                             <span className="text-muted-foreground">Name:</span>
                                                                                             <p className="font-medium">{expandedDriverDetails?.driver?.name}</p>
@@ -352,7 +351,7 @@ const DriverManagement = () => {
                                                                                         </div>
                                                                                     </div>
                                                                                 </div>
-                                                                                
+
                                                                                 <div>
                                                                                     <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
                                                                                     <div className="grid grid-cols-1 gap-3">
@@ -366,7 +365,7 @@ const DriverManagement = () => {
                                                                                         </div>
                                                                                     </div>
                                                                                 </div>
-                                                                                
+
                                                                                 <div className="md:col-span-2">
                                                                                     <h3 className="text-lg font-semibold mb-4">Vehicle Details</h3>
                                                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -385,28 +384,13 @@ const DriverManagement = () => {
                                                                                         </div>
                                                                                     </div>
                                                                                 </div>
-                                                                                
+
                                                                                 <div className="md:col-span-2">
                                                                                     <h3 className="text-lg font-semibold mb-4">Performance</h3>
                                                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                                                         <div className="bg-primary/10 p-4 rounded-lg">
-                                                                                            <div className="text-sm text-muted-foreground">Rating</div>
-                                                                                            <div className="text-lg font-bold mt-1 flex items-center">
-                                                                                                {expandedDriverDetails?.driver?.rating || "N/A"}
-                                                                                                {expandedDriverDetails?.driver?.rating && <span className="ml-1 text-yellow-500">★</span>}
-                                                                                            </div>
-                                                                                        </div>
-                                                                                        <div className="bg-primary/10 p-4 rounded-lg">
                                                                                             <div className="text-sm text-muted-foreground">Total Rides</div>
-                                                                                            <div className="text-lg font-bold mt-1">{expandedDriverDetails?.rideBookings?.length || 0}</div>
-                                                                                        </div>
-                                                                                        <div className="bg-primary/10 p-4 rounded-lg">
-                                                                                            <div className="text-sm text-muted-foreground">Completion Rate</div>
-                                                                                            <div className="text-lg font-bold mt-1">
-                                                                                                {expandedDriverDetails?.rideBookings?.length 
-                                                                                                    ? `${Math.round((expandedDriverDetails.rideBookings.filter(booking => booking.status === "completed").length / expandedDriverDetails.rideBookings.length) * 100)}%` 
-                                                                                                    : "N/A"}
-                                                                                            </div>
+                                                                                            <div className="text-lg font-bold mt-1">{expandedDriverDetails?.driver?.totalCompletedRides || 0}</div>
                                                                                         </div>
                                                                                     </div>
                                                                                 </div>
@@ -512,11 +496,20 @@ const DriverManagement = () => {
                     {driverToEdit && (
                         <div className="grid gap-4 py-4">
                             <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="username" className="text-right">Username</Label>
+                                <Input
+                                    id="username"
+                                    value={driverToEdit.username || ""}
+                                    onChange={(e) => setDriverToEdit({ ...driverToEdit, username: e.target.value })}
+                                    className="col-span-3"
+                                />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="name" className="text-right">Name</Label>
                                 <Input
                                     id="name"
                                     value={driverToEdit.name}
-                                    onChange={(e) => setDriverToEdit({...driverToEdit, name: e.target.value})}
+                                    onChange={(e) => setDriverToEdit({ ...driverToEdit, name: e.target.value })}
                                     className="col-span-3"
                                 />
                             </div>
@@ -526,7 +519,7 @@ const DriverManagement = () => {
                                     id="email"
                                     type="email"
                                     value={driverToEdit.email}
-                                    onChange={(e) => setDriverToEdit({...driverToEdit, email: e.target.value})}
+                                    onChange={(e) => setDriverToEdit({ ...driverToEdit, email: e.target.value })}
                                     className="col-span-3"
                                 />
                             </div>
@@ -535,7 +528,7 @@ const DriverManagement = () => {
                                 <Input
                                     id="phone"
                                     value={driverToEdit.phone}
-                                    onChange={(e) => setDriverToEdit({...driverToEdit, phone: e.target.value})}
+                                    onChange={(e) => setDriverToEdit({ ...driverToEdit, phone: e.target.value })}
                                     className="col-span-3"
                                 />
                             </div>
@@ -544,7 +537,7 @@ const DriverManagement = () => {
                                 <Input
                                     id="address"
                                     value={driverToEdit.address || ""}
-                                    onChange={(e) => setDriverToEdit({...driverToEdit, address: e.target.value})}
+                                    onChange={(e) => setDriverToEdit({ ...driverToEdit, address: e.target.value })}
                                     className="col-span-3"
                                 />
                             </div>
@@ -553,7 +546,7 @@ const DriverManagement = () => {
                                 <Input
                                     id="carModel"
                                     value={driverToEdit.carModel}
-                                    onChange={(e) => setDriverToEdit({...driverToEdit, carModel: e.target.value})}
+                                    onChange={(e) => setDriverToEdit({ ...driverToEdit, carModel: e.target.value })}
                                     className="col-span-3"
                                 />
                             </div>
@@ -562,15 +555,15 @@ const DriverManagement = () => {
                                 <Input
                                     id="carNumber"
                                     value={driverToEdit.carNumber}
-                                    onChange={(e) => setDriverToEdit({...driverToEdit, carNumber: e.target.value})}
+                                    onChange={(e) => setDriverToEdit({ ...driverToEdit, carNumber: e.target.value })}
                                     className="col-span-3"
                                 />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="carType" className="text-right">Car Type</Label>
-                                <Select 
+                                <Select
                                     value={driverToEdit.carType}
-                                    onValueChange={(value) => setDriverToEdit({...driverToEdit, carType: value})}
+                                    onValueChange={(value) => setDriverToEdit({ ...driverToEdit, carType: value })}
                                 >
                                     <SelectTrigger className="col-span-3">
                                         <SelectValue placeholder="Select car type" />
@@ -589,15 +582,15 @@ const DriverManagement = () => {
                                     id="seats"
                                     type="number"
                                     value={driverToEdit.seatingCapacity}
-                                    onChange={(e) => setDriverToEdit({...driverToEdit, seatingCapacity: parseInt(e.target.value)})}
+                                    onChange={(e) => setDriverToEdit({ ...driverToEdit, seatingCapacity: parseInt(e.target.value) })}
                                     className="col-span-3"
                                 />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="status" className="text-right">Status</Label>
-                                <Select 
+                                <Select
                                     value={driverToEdit.status}
-                                    onValueChange={(value) => setDriverToEdit({...driverToEdit, status: value})}
+                                    onValueChange={(value) => setDriverToEdit({ ...driverToEdit, status: value })}
                                 >
                                     <SelectTrigger className="col-span-3">
                                         <SelectValue placeholder="Select status" />
@@ -628,75 +621,84 @@ const DriverManagement = () => {
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="username-new" className="text-right">Username</Label>
+                            <Input
+                                id="username-new"
+                                value={newDriver.username}
+                                onChange={(e) => setNewDriver({ ...newDriver, username: e.target.value })}
+                                className="col-span-3"
+                            />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="name-new" className="text-right">Name</Label>
-                            <Input 
-                                id="name-new" 
+                            <Input
+                                id="name-new"
                                 value={newDriver.name}
-                                onChange={(e) => setNewDriver({...newDriver, name: e.target.value})}
-                                className="col-span-3" 
+                                onChange={(e) => setNewDriver({ ...newDriver, name: e.target.value })}
+                                className="col-span-3"
                             />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="email-new" className="text-right">Email</Label>
-                            <Input 
-                                id="email-new" 
-                                type="email" 
+                            <Input
+                                id="email-new"
+                                type="email"
                                 value={newDriver.email}
-                                onChange={(e) => setNewDriver({...newDriver, email: e.target.value})}
-                                className="col-span-3" 
+                                onChange={(e) => setNewDriver({ ...newDriver, email: e.target.value })}
+                                className="col-span-3"
                             />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="password-new" className="text-right">Password</Label>
-                            <Input 
-                                id="password-new" 
+                            <Input
+                                id="password-new"
                                 type="password"
                                 value={newDriver.password}
-                                onChange={(e) => setNewDriver({...newDriver, password: e.target.value})}
-                                className="col-span-3" 
+                                onChange={(e) => setNewDriver({ ...newDriver, password: e.target.value })}
+                                className="col-span-3"
                             />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="phone-new" className="text-right">Phone</Label>
-                            <Input 
+                            <Input
                                 id="phone-new"
                                 value={newDriver.phone}
-                                onChange={(e) => setNewDriver({...newDriver, phone: e.target.value})}
-                                className="col-span-3" 
+                                onChange={(e) => setNewDriver({ ...newDriver, phone: e.target.value })}
+                                className="col-span-3"
                             />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="address-new" className="text-right">Address</Label>
-                            <Input 
+                            <Input
                                 id="address-new"
                                 value={newDriver.address}
-                                onChange={(e) => setNewDriver({...newDriver, address: e.target.value})}
-                                className="col-span-3" 
+                                onChange={(e) => setNewDriver({ ...newDriver, address: e.target.value })}
+                                className="col-span-3"
                             />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="carModel-new" className="text-right">Car Model</Label>
-                            <Input 
+                            <Input
                                 id="carModel-new"
                                 value={newDriver.carModel}
-                                onChange={(e) => setNewDriver({...newDriver, carModel: e.target.value})}
-                                className="col-span-3" 
+                                onChange={(e) => setNewDriver({ ...newDriver, carModel: e.target.value })}
+                                className="col-span-3"
                             />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="carNumber-new" className="text-right">Car Number</Label>
-                            <Input 
-                                id="carNumber-new" 
+                            <Input
+                                id="carNumber-new"
                                 value={newDriver.carNumber}
-                                onChange={(e) => setNewDriver({...newDriver, carNumber: e.target.value})}
-                                className="col-span-3" 
+                                onChange={(e) => setNewDriver({ ...newDriver, carNumber: e.target.value })}
+                                className="col-span-3"
                             />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="carType-new" className="text-right">Car Type</Label>
-                            <Select 
+                            <Select
                                 value={newDriver.carType}
-                                onValueChange={(value) => setNewDriver({...newDriver, carType: value})}
+                                onValueChange={(value) => setNewDriver({ ...newDriver, carType: value })}
                             >
                                 <SelectTrigger className="col-span-3">
                                     <SelectValue placeholder="Select car type" />
@@ -711,12 +713,12 @@ const DriverManagement = () => {
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="seats-new" className="text-right">Seats</Label>
-                            <Input 
-                                id="seats-new" 
+                            <Input
+                                id="seats-new"
                                 type="number"
                                 value={newDriver.seatingCapacity}
-                                onChange={(e) => setNewDriver({...newDriver, seatingCapacity: parseInt(e.target.value)})}
-                                className="col-span-3" 
+                                onChange={(e) => setNewDriver({ ...newDriver, seatingCapacity: parseInt(e.target.value) })}
+                                className="col-span-3"
                             />
                         </div>
                     </div>

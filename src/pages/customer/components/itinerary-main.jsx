@@ -55,7 +55,7 @@ export default function ItinerariesPage() {
     const startDate = new Date(itinerary.startDate)
     const endDate = new Date(itinerary.endDate)
     const today = new Date()
-    return startDate > today && endDate > today
+    return startDate > today
   })
   
   const ongoingItineraries = safeItineraries.filter((itinerary) => {

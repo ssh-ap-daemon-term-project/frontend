@@ -44,9 +44,16 @@ const API = axios.create({
 // book room
 // Book a room
 export const bookRoom = async (roomItemId, numberOfPersons, customerId) => {
-    return await API.post('/customer/book-room', {
+    return await API.post('/customer/itinerary/room/book', {
         room_item_id: roomItemId,
         number_of_persons: numberOfPersons,
         customer_id: customerId
     });
 };
+
+export const cancelRoom = async (roomItemId, customerId) => {
+    return await API.post('/customer/itinerary/room/cancel', {
+        room_item_id: roomItemId,
+        customer_id: customerId
+    });
+}

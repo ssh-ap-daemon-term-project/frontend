@@ -64,7 +64,7 @@ export default function ItinerariesPage() {
     const startDate = new Date(itinerary.startDate)
     const endDate = new Date(itinerary.endDate)
     const today = new Date()
-    return startDate <= today && endDate >= today
+    return startDate <= today && endDate > today
   })
   
   const completedItineraries = safeItineraries.filter((itinerary) => {
@@ -72,7 +72,7 @@ export default function ItinerariesPage() {
     
     const endDate = new Date(itinerary.endDate)
     const today = new Date()
-    return endDate < today
+    return endDate <= today
   })
 
   useEffect(() => {

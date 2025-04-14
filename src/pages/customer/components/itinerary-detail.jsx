@@ -108,11 +108,9 @@ export default function ItineraryDetailPage() {
   })
 
   const [rideForm, setRideForm] = useState({
-    type: "taxi",
     pickupLocation: "",
     dropoffLocation: "",
     pickupDateTime: "",
-    withDriverService: false,
   })
 
   const [reviewForm, setReviewForm] = useState({
@@ -411,30 +409,25 @@ export default function ItineraryDetailPage() {
 
     try {
       const rideData = {
-        type: rideForm.type,
         pickupLocation: rideForm.pickupLocation,
         dropLocation: rideForm.dropoffLocation,
         pickupTime: new Date(rideForm.pickupDateTime).toISOString(),
         numberOfPersons: itinerary.numberOfPersons,
-        withDriverService: rideForm.withDriverService,
-        price: rideForm.type === "taxi" ? 65 : 85, // This would be calculated by the backend in a real app
       }
 
       const response = await bookRide(itineraryId, rideData)
 
       setItinerary({
         ...itinerary,
-        rideBookings: [...itinerary.rideBookings, response.data],
-      })
+        rideBookings: [...(itinerary.rideBookings || []), response.data],
+      });
 
-      setShowAddRideDialog(false)
+      setShowAddRideDialog(false);
       setRideForm({
-        type: "taxi",
         pickupLocation: "",
         dropoffLocation: "",
         pickupDateTime: "",
-        withDriverService: false,
-      })
+      });
 
       toast.success(`Your ${rideForm.type} ride has been booked successfully.`)
     } catch (err) {
@@ -1755,22 +1748,6 @@ export default function ItineraryDetailPage() {
           <form onSubmit={handleAddRide}>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <label htmlFor="ride-type" className="text-sm font-medium">
-                  Ride Type
-                </label>
-                <Select value={rideForm.type} onValueChange={(value) => setRideForm({ ...rideForm, type: value })}>
-                  <SelectTrigger id="ride-type">
-                    <SelectValue placeholder="Select ride type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="taxi">Taxi</SelectItem>
-                    <SelectItem value="premium">Premium Car</SelectItem>
-                    <SelectItem value="shuttle">Shuttle</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid gap-2">
                 <label htmlFor="pickup-location" className="text-sm font-medium">
                   Pickup Location
                 </label>
@@ -1809,24 +1786,11 @@ export default function ItineraryDetailPage() {
                 />
               </div>
 
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="driver-service"
-                  className="h-4 w-4 rounded border-gray-300"
-                  checked={rideForm.withDriverService}
-                  onChange={(e) => setRideForm({ ...rideForm, withDriverService: e.target.checked })}
-                />
-                <label htmlFor="driver-service" className="text-sm font-medium">
-                  Request driver service (personal driver for the duration of your stay)
-                </label>
-              </div>
-
               <div className="rounded-md bg-muted p-3 text-sm">
                 <p className="font-medium">Estimated Price</p>
-                <p className="mt-1">
-                  {rideForm.type === "taxi" ? "$65" : rideForm.type === "premium" ? "$85" : "$45"}
-                  {rideForm.withDriverService && " + $120/day for driver service"}
+                <p className="mt-1">$100.00</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Final price may vary based on distance and time
                 </p>
               </div>
             </div>

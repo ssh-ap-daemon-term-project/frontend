@@ -131,6 +131,8 @@ export default function ItineraryDetailPage() {
     try {
       setLoading(true)
       const response = await getItineraryById(itineraryId)
+      console.log("Itinerary response:", response.data)
+      console.log("Ride Bookings:", response.data.rideBookings)
       setItinerary(response.data)
       setLoading(false)
     } catch (err) {
@@ -417,16 +419,16 @@ export default function ItineraryDetailPage() {
       const roomItemId = room.id;
       const numberOfPersons = itinerary.numberOfPersons;
       const customerId = itinerary.customerId;
-  
+
       // Call the API function
       const response = await bookRoom(roomItemId, numberOfPersons, customerId);
-      
+
       // Handle successful response
       toast.success('Room booked successfully');
-      
+
       // Refresh the itinerary to get the updated booking status
       fetchItinerary();
-      
+
       return response.data;
     } catch (error) {
       // Handle error properly
@@ -444,8 +446,8 @@ export default function ItineraryDetailPage() {
     try {
       const rideData = {
         pickupLocation: rideForm.pickupLocation,
-        dropLocation: rideForm.dropoffLocation,
-        pickupTime: new Date(rideForm.pickupDateTime).toISOString(),
+        dropoffLocation: rideForm.dropoffLocation,
+        pickupDateTime: new Date(rideForm.pickupDateTime).toISOString(),
         numberOfPersons: itinerary.numberOfPersons,
       }
 
@@ -463,7 +465,7 @@ export default function ItineraryDetailPage() {
         pickupDateTime: "",
       });
 
-      toast.success(`Your ${rideForm.type} ride has been booked successfully.`)
+      toast.success(`Your ride has been booked successfully.`)
     } catch (err) {
       toast.error("Failed to book ride")
       console.error(err)
@@ -476,8 +478,8 @@ export default function ItineraryDetailPage() {
     setRideForm({
       type: ride.type,
       pickupLocation: ride.pickupLocation,
-      dropoffLocation: ride.dropLocation,
-      pickupDateTime: format(new Date(ride.pickupTime), "yyyy-MM-dd'T'HH:mm"),
+      dropoffLocation: ride.dropoffLocation,
+      pickupDateTime: format(new Date(ride.pickupDateTime), "yyyy-MM-dd'T'HH:mm"),
       withDriverService: ride.withDriverService,
     })
     setShowEditRideDialog(true)
@@ -490,8 +492,8 @@ export default function ItineraryDetailPage() {
       const rideData = {
         type: rideForm.type,
         pickupLocation: rideForm.pickupLocation,
-        dropLocation: rideForm.dropoffLocation,
-        pickupTime: new Date(rideForm.pickupDateTime).toISOString(),
+        dropoffLocation: rideForm.dropoffLocation,
+        pickupDateTime: new Date(rideForm.pickupDateTime).toISOString(),
         withDriverService: rideForm.withDriverService,
       }
 
@@ -1101,20 +1103,22 @@ export default function ItineraryDetailPage() {
           <div className="mb-4 flex justify-between">
             <h2 className="text-xl font-bold">Transportation</h2>
             <Button
+              variant="destructive"
               onClick={() => {
-                setRideForm({
-                  type: "taxi",
-                  pickupLocation: "",
-                  dropoffLocation: "",
-                  pickupDateTime: "",
-                  withDriverService: itinerary.driverServiceRequested,
-                })
-                setShowAddRideDialog(true)
+                // Find the first ride that can be cancelled (not completed)
+                const cancelableRide = itinerary.rideBookings.find(
+                  ride => ride.status !== "completed" && ride.status !== "cancelled"
+                );
+                if (cancelableRide) {
+                  handleCancelRide(cancelableRide.id);
+                } else {
+                  toast.info("No active rides to cancel");
+                }
               }}
               className="gap-2"
             >
-              <PlusIcon className="h-4 w-4" />
-              Book Ride
+              <TrashIcon className="h-4 w-4" />
+              Cancel Ride
             </Button>
           </div>
 
@@ -1129,15 +1133,10 @@ export default function ItineraryDetailPage() {
                           <Badge variant={ride.status === "confirmed" ? "default" : "destructive"}>
                             {ride.status.charAt(0).toUpperCase() + ride.status.slice(1)}
                           </Badge>
-                          <Badge variant="outline">{ride.type.charAt(0).toUpperCase() + ride.type.slice(1)}</Badge>
-                          {ride.withDriverService && (
-                            <Badge variant="outline" className="border-amber-500 text-amber-500">
-                              With Driver
-                            </Badge>
-                          )}
+
                         </div>
 
-                        <h4 className="font-medium">{format(new Date(ride.pickupTime), "MMM d, yyyy h:mm a")}</h4>
+                        <h4 className="font-medium">{format(new Date(ride.pickupDateTime), "MMM d, yyyy h:mm a")}</h4>
 
                         <div className="mt-2 space-y-1">
                           <div className="flex items-start gap-2 text-sm">
@@ -1152,16 +1151,14 @@ export default function ItineraryDetailPage() {
                             <MapPinIcon className="mt-0.5 h-4 w-4 text-muted-foreground" />
                             <div>
                               <p className="font-medium">Dropoff</p>
-                              <p className="text-muted-foreground">{ride.dropLocation}</p>
+                              <p className="text-muted-foreground">{ride.dropoffLocation}</p>
                             </div>
                           </div>
                         </div>
 
-                        {ride.status === "confirmed" && ride.driverName !== "To be assigned" && (
+                        {ride.status === "confirmed" && ride.driverName !== "Pending..." && (
                           <div className="mt-3 rounded-md bg-muted p-2 text-sm">
                             <p className="font-medium">Driver: {ride.driverName}</p>
-                            {ride.driverPhone && <p>Phone: {ride.driverPhone}</p>}
-                            {ride.vehicleInfo && <p>Vehicle: {ride.vehicleInfo}</p>}
                           </div>
                         )}
                       </div>
@@ -1262,7 +1259,7 @@ export default function ItineraryDetailPage() {
                               <h4 className="font-medium">Ride Service</h4>
                               <p className="text-sm text-muted-foreground">
                                 {ride.type.charAt(0).toUpperCase() + ride.type.slice(1)} -{" "}
-                                {format(new Date(ride.pickupTime), "MMM d, yyyy")}
+                                {format(new Date(ride.pickupDateTime), "MMM d, yyyy")}
                               </p>
                             </div>
                             <Button

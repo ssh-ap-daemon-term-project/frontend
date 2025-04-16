@@ -894,7 +894,6 @@ export default function ItineraryDetailPage() {
           <TabsTrigger value="schedule">Schedule</TabsTrigger>
           <TabsTrigger value="accommodations">Accommodations</TabsTrigger>
           <TabsTrigger value="transportation">Transportation</TabsTrigger>
-          <TabsTrigger value="reviews">Reviews</TabsTrigger>
         </TabsList>
 
         <TabsContent value="schedule">

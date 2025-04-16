@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { StarIcon, MapPinIcon, SearchIcon, FilterIcon, Loader2 } from "lucide-react"
+import { StarIcon, MapPinIcon, SearchIcon, FilterIcon, Loader2, Hotel as HotelIcon } from "lucide-react"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { Link } from "react-router-dom"
 import { useSearchParams } from "react-router-dom"
@@ -165,11 +165,17 @@ export default function HotelsPage() {
               <Link key={hotel.id} to={`/customer/hotels/${hotel.id}`}>
                 <Card className="h-full overflow-hidden transition-all hover:shadow-md">
                   <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={hotel.imageUrl || "/placeholder.svg"}
-                      alt={hotel.name}
-                      className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
-                    />
+                    {hotel.imageUrl ? (
+                      <img
+                        src={hotel.imageUrl}
+                        alt={hotel.name}
+                        className="h-full w-full object-cover transition-transform duration-300 hover:scale-110"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+                        <HotelIcon className="h-24 w-24 text-slate-400 dark:text-slate-500" />
+                      </div>
+                    )}
                     {hotel.basePrice && (
                       <Badge className="absolute right-2 top-2">${hotel.basePrice}/night</Badge>
                     )}

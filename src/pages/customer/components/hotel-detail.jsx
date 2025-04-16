@@ -17,10 +17,11 @@ import { Calendar } from "@/components/ui/calendar"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { StarIcon, MapPinIcon, CheckIcon, CreditCardIcon, UsersIcon, Loader2, CalendarIcon } from "lucide-react"
+import { StarIcon, MapPinIcon, CheckIcon, CreditCardIcon, UsersIcon, Loader2, CalendarIcon, BedIcon, Hotel as HotelIcon } from "lucide-react"
 import { format, addDays, parseISO } from "date-fns"
 import { toast } from "react-toastify"
 import { getHotelById, bookRoomByRoomId } from "@/api/customer"
+
 
 export default function HotelDetailPage() {
   const navigate = useNavigate()
@@ -84,20 +85,20 @@ export default function HotelDetailPage() {
         toast.error("Please select a room to book.")
         return
       }
-  
+
       if (!bookingDates || !bookingDates.from || !bookingDates.to) {
         toast.error("Please select check-in and check-out dates.")
         return
       }
-  
+
       if (guests <= 0) {
         toast.error("Please select at least one guest.")
         return
       }
-  
+
       // Show loading state
       toast.info("Processing your booking...")
-      
+
       // Call the API directly with the correct parameters
       const response = await bookRoomByRoomId({
         room_id: selectedRoom.id,
@@ -105,13 +106,13 @@ export default function HotelDetailPage() {
         end_date: bookingDates.to.toISOString(),
         number_of_persons: guests
       })
-      
+
       // Handle successful booking
       toast.success("Room booked successfully!")
-      
+
       // Close the booking dialog
       setSelectedRoom(null)
-      
+
       // Optionally redirect to bookings page
       // navigate("/customer/bookings")
     } catch (error) {
@@ -278,27 +279,43 @@ export default function HotelDetailPage() {
           <div className="flex items-center gap-1">
             <StarIcon className="h-4 w-4 fill-yellow-400 text-yellow-400" />
             <span>{hotel.rating}</span>
-            <span className="text-muted-foreground">({hotel.reviews.length} reviews)</span>
+            <span className="text-muted-foreground">({hotel.reviews.length} {hotel.reviews.length > 1 ? "reviews" : "review"})</span>
           </div>
         </div>
       </div>
-
       <Carousel className="mb-8">
         <CarouselContent>
-          {hotel?.images?.map((image, index) => (
-            <CarouselItem key={index}>
-              <div className="h-[400px] overflow-hidden rounded-xl">
-                <img
-                  src={image || "/placeholder.svg"}
-                  alt={`${hotel.name} - Image ${index + 1}`}
-                  className="h-full w-full object-cover"
-                />
+          {hotel.images && hotel.images.length > 0 ? (
+            // If hotel has images, display them in carousel
+            hotel.images.map((image, index) => (
+              <CarouselItem key={index}>
+                <div className="h-[400px] overflow-hidden rounded-xl">
+                  <img
+                    src={image || "/placeholder.svg"}
+                    alt={`${hotel.name} - Image ${index + 1}`}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              </CarouselItem>
+            ))
+          ) : (
+            // If hotel has no images, display a default image
+            <CarouselItem>
+              <div className="h-[400px] overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-800">
+                <div className="flex h-full w-full flex-col items-center justify-center">
+                  <HotelIcon className="h-24 w-24 text-slate-400 dark:text-slate-500" />
+                  <p className="mt-4 text-slate-500 dark:text-slate-400">No images available for this hotel</p>
+                </div>
               </div>
             </CarouselItem>
-          ))}
+          )}
         </CarouselContent>
-        <CarouselPrevious className="left-2" />
-        <CarouselNext className="right-2" />
+        {hotel.images && hotel.images.length > 1 && (
+          <>
+            <CarouselPrevious className="left-2" />
+            <CarouselNext className="right-2" />
+          </>
+        )}
       </Carousel>
 
       <Tabs defaultValue="rooms" className="mb-8">
@@ -310,50 +327,73 @@ export default function HotelDetailPage() {
 
         <TabsContent value="rooms">
           <div className="space-y-6">
-            {hotel?.rooms?.map((room) => (
-              <Card key={room.id} className="overflow-hidden">
-                <div className="grid grid-cols-1 md:grid-cols-3">
-                  <div className="h-48 md:h-full">
-                    <img
-                      src={room.images ? room.images[0] : "/placeholder.svg"}
-                      alt={room.name}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div className="col-span-2 p-6">
-                    <div className="mb-4 flex items-start justify-between">
-                      <div>
-                        <h3 className="text-xl font-bold">{room.name}</h3>
-                        <p className="text-muted-foreground">{room.description}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold">${room.basePrice}</div>
-                        <div className="text-sm text-muted-foreground">per night</div>
-                      </div>
+            {hotel.rooms && hotel.rooms.length > 0 ? (
+              hotel.rooms?.map((room) => (
+                <Card key={room.id} className="overflow-hidden">
+                  <div className="grid grid-cols-1 md:grid-cols-3">
+                    <div className="h-48 md:h-full">
+                      {room.images && room.images.length > 0 ? (
+                        <img
+                          src={room.images[0]}
+                          alt={room.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full flex-col items-center justify-center bg-slate-100 dark:bg-slate-800">
+                          <BedIcon className="h-12 w-12 text-slate-400 dark:text-slate-500" />
+                          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">No image available</p>
+                        </div>
+                      )}
                     </div>
+                    <div className="col-span-2 p-6">
+                      <div className="mb-4 flex items-start justify-between">
+                        <div>
+                          <h3 className="text-xl font-bold">{room.name}</h3>
+                          <p className="text-muted-foreground">{room.description}</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-2xl font-bold">${room.basePrice}</div>
+                          <div className="text-sm text-muted-foreground">per night</div>
+                        </div>
+                      </div>
 
-                    <div className="mb-4">
-                      <div className="mb-2 flex items-center gap-2">
-                        <UsersIcon className="h-4 w-4" />
-                        <span>Max {room.roomCapacity} guests</span>
+                      <div className="mb-4">
+                        <div className="mb-2 flex items-center gap-2">
+                          <UsersIcon className="h-4 w-4" />
+                          <span>Max {room.roomCapacity} guests</span>
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="flex justify-between">
-                      <div className="text-sm">
-                        <AvailabilityCalendar room={room} />
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" onClick={() => navigate(`/customer`)}>
-                          Add to Itinerary
-                        </Button>
-                        <Button onClick={() => handleBookNow(room)}>Book Now</Button>
+                      <div className="flex justify-between">
+                        <div className="text-sm">
+                          <AvailabilityCalendar room={room} />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" onClick={() => navigate(`/customer`)}>
+                            Add to Itinerary
+                          </Button>
+                          <Button onClick={() => handleBookNow(room)}>Book Now</Button>
+                        </div>
                       </div>
                     </div>
                   </div>
+                </Card>))
+            ) : (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-8 text-center dark:bg-amber-950 dark:border-amber-800">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900">
+                  <BedIcon className="h-8 w-8 text-amber-600 dark:text-amber-400" />
                 </div>
-              </Card>
-            ))}
+                <h2 className="text-2xl font-bold text-amber-800 dark:text-amber-300">No Rooms Available</h2>
+                <p className="mt-2 text-amber-700 dark:text-amber-400">
+                  This hotel currently doesn't have any available rooms for the selected dates or filters.
+                </p>
+                <div className="mt-6">
+                  <Button variant="outline" className="border-amber-600 text-amber-700 hover:bg-amber-100 dark:text-amber-400 dark:border-amber-700 dark:hover:bg-amber-900" onClick={() => navigate(-1)}>
+                    Go Back
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </TabsContent>
 
@@ -370,14 +410,14 @@ export default function HotelDetailPage() {
                   <h3 className="mb-4 text-xl font-bold">Location</h3>
                   <div className="mb-4 aspect-video overflow-hidden rounded-md bg-muted">
                     {/* Map placeholder */}
-                    <div className="flex h-full items-center justify-center hover:cursor-pointer" onClick={() => window.open(`https://maps.google.com/?q=${hotel?.latitude},${hotel?.longitude}`, '_blank')}>
+                    <div className="flex h-full items-center justify-center hover:cursor-pointer" onClick={() => window.open(`https://maps.google.com/?q=${hotel.latitude},${hotel.longitude}`, '_blank')}>
                       <MapPinIcon className="h-8 w-8 text-muted-foreground" />
                     </div>
                   </div>
                   <Button
                     variant="link"
                     className="p-0 h-auto"
-                    onClick={() => window.open(`https://maps.google.com/?q=${hotel?.latitude},${hotel?.longitude}`, '_blank')}
+                    onClick={() => window.open(`https://maps.google.com/?q=${hotel.latitude},${hotel.longitude}`, '_blank')}
                   >
                     View on Google Maps
                   </Button>
@@ -405,18 +445,15 @@ export default function HotelDetailPage() {
                           <span>{review.rating}</span>
                         </div>
                       </div>
+                      <hr />
                       <div className="mb-2 text-sm text-muted-foreground">{review.date}</div>
-                      <p>{review.comment}</p>
+                      <p>{review.description}</p>
                     </div>
                   ))}
                 </div>
               ) : (
                 <p className="text-muted-foreground">No reviews yet for this hotel.</p>
               )}
-
-              <Button className="mt-6" variant="outline">
-                Write a Review
-              </Button>
             </div>
 
             <div>

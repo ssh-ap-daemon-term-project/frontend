@@ -41,6 +41,7 @@ const API = axios.create({
 //     return await API.get(`/itineraries/${itineraryId}/items`);
 // };
 
+// book room
 // Book a room
 export const bookRoom = async (roomItemId, numberOfPersons, customerId) => {
     return await API.post('/customer/itinerary/room/book', {
@@ -79,7 +80,7 @@ export const bookRoomByRoomId = async (bookingData) => {
 };
 
 export const getBookings = async () => {
-        return await API.get("/customer/bookings");
+    return await API.get("/customer/bookings");
 };
 
 // Cancel a booking by ID
@@ -88,12 +89,30 @@ export const cancelBooking = async (bookingId) => {
 };
 
 // Post a review for a booking
-export const postReview = async (bookingId, rating, comment) => {
-    return await API.post(`/customer/bookings/${bookingId}/review`, {
+export const postReview = async (booking_id, rating, comment) => {
+    return await API.post(`/customer/bookings/review`, {
+        booking_id,
         rating,
         comment
     });
-}
+};
+
+// API service for customer reviews
+
+// Get all reviews for the current customer
+export const getCustomerReviews = async () => {
+    return await API.get('/customer/reviews');
+};
+
+// Update a review
+export const updateReview = async (reviewId, reviewData) => {
+    return await API.put(`/customer/reviews/${reviewId}`, reviewData);
+};
+
+// Delete a review
+export const deleteReview = async (reviewId) => {
+    return await API.delete(`/customer/reviews/${reviewId}`);
+};
 
 export const getCustomerProfile = async () => {
     return await API.get('/customer/profile');

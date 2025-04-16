@@ -96,20 +96,18 @@ const RoomBookingsManagement = () => {
         // Apply tab filter
         if (selectedTab === "upcoming") {
             filtered = filtered.filter(booking => 
-                new Date(booking.startDate) > new Date() && 
-                (booking.status === "confirmed" || booking.status === "pending")
+                new Date(booking.startDate) > new Date()
             );
         } else if (selectedTab === "active") {
             const now = new Date();
             filtered = filtered.filter(booking => 
                 new Date(booking.startDate) <= now && 
-                new Date(booking.endDate) >= now && 
-                booking.status === "confirmed"
+                new Date(booking.endDate) > now
             );
         } else if (selectedTab === "completed") {
-            filtered = filtered.filter(booking => booking.status === "completed");
-        } else if (selectedTab === "cancelled") {
-            filtered = filtered.filter(booking => booking.status === "cancelled");
+            filtered = filtered.filter(booking => 
+                new Date(booking.endDate) <= new Date()
+            );
         }
         
         // Apply hotel filter
@@ -157,8 +155,6 @@ const RoomBookingsManagement = () => {
                 return <Badge variant="primary">Active</Badge>;
             case 'completed':
                 return <Badge variant="secondary">Completed</Badge>;
-            case 'cancelled':
-                return <Badge variant="destructive">Cancelled</Badge>;
             default:
                 return <Badge variant="outline">{status}</Badge>;
         }
@@ -197,7 +193,6 @@ const RoomBookingsManagement = () => {
                             <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
                             <TabsTrigger value="active">Active</TabsTrigger>
                             <TabsTrigger value="completed">Completed</TabsTrigger>
-                            <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
                         </TabsList>
                     </Tabs>
                     

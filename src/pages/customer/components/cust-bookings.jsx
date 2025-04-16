@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -11,92 +11,124 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { Loader2, CalendarIcon, MapPinIcon, UsersIcon, AlertTriangleIcon, StarIcon } from "lucide-react"
 import { format } from "date-fns"
-import { CalendarIcon, MapPinIcon, UsersIcon, AlertTriangleIcon } from "lucide-react"
 import { toast } from "react-toastify"
-
-// Mock data for bookings
-const mockBookings = [
-  {
-    id: 1,
-    hotelId: 1,
-    hotelName: "Grand Plaza Hotel",
-    roomName: "Deluxe Room",
-    city: "New York",
-    startDate: new Date(2023, 7, 15),
-    endDate: new Date(2023, 7, 18),
-    guests: 2,
-    totalPrice: 897,
-    status: "upcoming",
-    image: "/placeholder.svg?height=300&width=500",
-  },
-  {
-    id: 2,
-    hotelId: 3,
-    hotelName: "Mountain View Lodge",
-    roomName: "Standard Room",
-    city: "Denver",
-    startDate: new Date(2023, 8, 10),
-    endDate: new Date(2023, 8, 15),
-    guests: 1,
-    totalPrice: 895,
-    status: "upcoming",
-    image: "/placeholder.svg?height=300&width=500",
-  },
-  {
-    id: 3,
-    hotelId: 2,
-    hotelName: "Seaside Resort",
-    roomName: "Executive Suite",
-    city: "Miami",
-    startDate: new Date(2023, 6, 5),
-    endDate: new Date(2023, 6, 10),
-    guests: 3,
-    totalPrice: 1495,
-    status: "completed",
-    image: "/placeholder.svg?height=300&width=500",
-  },
-  {
-    id: 4,
-    hotelId: 5,
-    hotelName: "Harbor View Inn",
-    roomName: "Standard Room",
-    city: "San Francisco",
-    startDate: new Date(2023, 5, 20),
-    endDate: new Date(2023, 5, 25),
-    guests: 2,
-    totalPrice: 1295,
-    status: "cancelled",
-    image: "/placeholder.svg?height=300&width=500",
-  },
-]
+import { useNavigate } from "react-router-dom"
+import { getBookings, cancelBooking, postReview } from "@/api/customer"
 
 export default function BookingsPage() {
-  const [bookings, setBookings] = useState(mockBookings)
+  const [bookings, setBookings] = useState([])
+  const [loading, setLoading] = useState(true)
   const [selectedBooking, setSelectedBooking] = useState(null)
   const [showCancelDialog, setShowCancelDialog] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
+  
+  // Review dialog state
+  const [showReviewDialog, setShowReviewDialog] = useState(false)
+  const [bookingToReview, setBookingToReview] = useState(null)
+  const [reviewRating, setReviewRating] = useState(0)
+  const [reviewComment, setReviewComment] = useState("")
+  const [hoverRating, setHoverRating] = useState(0)
+  const [submittingReview, setSubmittingReview] = useState(false)
+  
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    loadBookings()
+  }, [])
+
+  const loadBookings = async () => {
+    try {
+      setLoading(true)
+      const response = await getBookings()
+      
+      // Convert date strings to Date objects
+      const formattedBookings = response.data.map(booking => ({
+        ...booking,
+        startDate: new Date(booking.startDate),
+        endDate: new Date(booking.endDate)
+      }))
+      console.log("Formatted Bookings:")
+      setBookings(formattedBookings)
+    } catch (error) {
+      console.error("Failed to fetch bookings:", error)
+      toast.error("Failed to load bookings. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const upcomingBookings = bookings.filter((booking) => booking.status === "upcoming")
   const completedBookings = bookings.filter((booking) => booking.status === "completed")
-  const cancelledBookings = bookings.filter((booking) => booking.status === "cancelled")
 
   const handleCancelBooking = (booking) => {
     setSelectedBooking(booking)
     setShowCancelDialog(true)
   }
 
-  const confirmCancelBooking = () => {
-    // In a real app, you would call an API to cancel the booking
-    setBookings(
-      bookings.map((booking) => (booking.id === selectedBooking.id ? { ...booking, status: "cancelled" } : booking)),
+  const confirmCancelBooking = async () => {
+    try {
+      setCancelling(true)
+      await cancelBooking(selectedBooking.id)
+      
+      // Update local state
+      setBookings(
+        bookings.map((booking) => 
+          booking.id === selectedBooking.id ? { ...booking, status: "cancelled" } : booking
+        )
+      )
+
+      toast.success(`Your booking at ${selectedBooking.hotelName} has been cancelled.`)
+      setShowCancelDialog(false)
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to cancel booking. Please try again.")
+    } finally {
+      setCancelling(false)
+    }
+  }
+  
+  // Handle opening the review dialog
+  const handleOpenReviewDialog = (booking) => {
+    setBookingToReview(booking)
+    setReviewRating(0)
+    setReviewComment("")
+    setShowReviewDialog(true)
+  }
+  
+  // Handle submitting the review
+  const handleSubmitReview = async () => {
+    if (reviewRating === 0) {
+      toast.error("Please select a rating")
+      return
+    }
+    
+    try {
+      setSubmittingReview(true)
+      await postReview(bookingToReview.id, reviewRating, reviewComment)
+      
+      toast.success("Thank you for your review!")
+      setShowReviewDialog(false)
+      
+      // Optionally mark the booking as reviewed in the UI
+      // This depends on your backend implementation
+    } catch (error) {
+      toast.error(error.message || "Failed to submit review. Please try again.")
+    } finally {
+      setSubmittingReview(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+          <p className="mt-2 text-muted-foreground">Loading your bookings...</p>
+        </div>
+      </div>
     )
-
-    setShowCancelDialog(false)
-
-    toast({
-      title: "Booking Cancelled",
-      description: `Your booking at ${selectedBooking.hotelName} has been cancelled.`,
-    })
   }
 
   return (
@@ -121,14 +153,6 @@ export default function BookingsPage() {
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="cancelled">
-            Cancelled
-            {cancelledBookings.length > 0 && (
-              <Badge className="ml-2" variant="secondary">
-                {cancelledBookings.length}
-              </Badge>
-            )}
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="upcoming">
@@ -139,6 +163,7 @@ export default function BookingsPage() {
                   key={booking.id}
                   booking={booking}
                   onCancel={() => handleCancelBooking(booking)}
+                  onReview={() => handleOpenReviewDialog(booking)}
                   showCancelButton={true}
                 />
               ))}
@@ -148,7 +173,7 @@ export default function BookingsPage() {
               title="No upcoming bookings"
               description="You don't have any upcoming bookings at the moment."
               actionText="Find Hotels"
-              actionLink="/hotels"
+              actionLink="/customer/hotels"
             />
           )}
         </TabsContent>
@@ -157,7 +182,12 @@ export default function BookingsPage() {
           {completedBookings.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {completedBookings.map((booking) => (
-                <BookingCard key={booking.id} booking={booking} showReviewButton={true} />
+                <BookingCard 
+                  key={booking.id} 
+                  booking={booking} 
+                  onReview={() => handleOpenReviewDialog(booking)} 
+                  showReviewButton={true} 
+                />
               ))}
             </div>
           ) : (
@@ -165,29 +195,13 @@ export default function BookingsPage() {
               title="No completed bookings"
               description="You don't have any completed bookings yet."
               actionText="Find Hotels"
-              actionLink="/hotels"
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="cancelled">
-          {cancelledBookings.length > 0 ? (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {cancelledBookings.map((booking) => (
-                <BookingCard key={booking.id} booking={booking} showRebookButton={true} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              title="No cancelled bookings"
-              description="You don't have any cancelled bookings."
-              actionText="Find Hotels"
-              actionLink="/hotels"
+              actionLink="/customer/hotels"
             />
           )}
         </TabsContent>
       </Tabs>
 
+      {/* Cancel Booking Dialog */}
       <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <DialogContent>
           <DialogHeader>
@@ -221,11 +235,102 @@ export default function BookingsPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCancelDialog(false)}>
+            <Button variant="outline" onClick={() => setShowCancelDialog(false)} disabled={cancelling}>
               Keep Booking
             </Button>
-            <Button variant="destructive" onClick={confirmCancelBooking}>
-              Cancel Booking
+            <Button variant="destructive" onClick={confirmCancelBooking} disabled={cancelling}>
+              {cancelling ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Cancelling...
+                </>
+              ) : (
+                "Cancel Booking"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Review Dialog */}
+      <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Write a Review</DialogTitle>
+            <DialogDescription>
+              Share your experience at {bookingToReview?.hotelName}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <div>
+              <label className="block mb-3 font-medium">Rating</label>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setReviewRating(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    className="focus:outline-none"
+                  >
+                    <StarIcon
+                      className={`h-8 w-8 ${
+                        (hoverRating || reviewRating) >= star
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "fill-muted text-muted"
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+              {reviewRating > 0 && (
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {reviewRating === 1 && "Poor - Not what I expected"}
+                  {reviewRating === 2 && "Fair - Could have been better"}
+                  {reviewRating === 3 && "Good - Met expectations"}
+                  {reviewRating === 4 && "Very Good - Would recommend"}
+                  {reviewRating === 5 && "Excellent - Exceeded expectations"}
+                </p>
+              )}
+            </div>
+            
+            <div>
+              <label htmlFor="comment" className="block mb-2 font-medium">
+                Your Review
+              </label>
+              <Textarea
+                id="comment"
+                placeholder="Tell us about your experience..."
+                rows={5}
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowReviewDialog(false)}
+              disabled={submittingReview}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSubmitReview} 
+              disabled={reviewRating === 0 || submittingReview}
+            >
+              {submittingReview ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit Review"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -234,7 +339,9 @@ export default function BookingsPage() {
   )
 }
 
-function BookingCard({ booking, onCancel, showCancelButton, showReviewButton, showRebookButton }) {
+function BookingCard({ booking, onCancel, onReview, showCancelButton, showReviewButton, showRebookButton }) {
+  const navigate = useNavigate()
+
   return (
     <Card className="overflow-hidden">
       <div className="relative h-48">
@@ -286,18 +393,26 @@ function BookingCard({ booking, onCancel, showCancelButton, showReviewButton, sh
       </CardContent>
 
       <CardFooter className="flex gap-2">
-        {showCancelButton && (
+        {showCancelButton && booking.status === "upcoming" && (
           <Button variant="outline" className="flex-1" onClick={onCancel}>
             Cancel Booking
           </Button>
         )}
 
-        {showReviewButton && <Button className="flex-1">Write Review</Button>}
+        {showReviewButton && booking.status === "completed" && (
+          <Button className="flex-1" onClick={onReview}>
+            Write Review
+          </Button>
+        )}
 
-        {showRebookButton && <Button className="flex-1">Book Again</Button>}
+        {showRebookButton && (
+          <Button className="flex-1" onClick={() => navigate(`/customer/hotels/${booking.hotelId}`)}>
+            Book Again
+          </Button>
+        )}
 
-        <Button variant="secondary" className="flex-1" asChild>
-          <a href={`/hotels/${booking.hotelId}`}>View Hotel</a>
+        <Button variant="secondary" className="flex-1" onClick={() => navigate(`/customer/hotels/${booking.hotelId}`)}>
+          View Hotel
         </Button>
       </CardFooter>
     </Card>
@@ -305,6 +420,8 @@ function BookingCard({ booking, onCancel, showCancelButton, showReviewButton, sh
 }
 
 function EmptyState({ title, description, actionText, actionLink }) {
+  const navigate = useNavigate()
+  
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
       <div className="mb-4 rounded-full bg-muted p-3">
@@ -312,10 +429,9 @@ function EmptyState({ title, description, actionText, actionLink }) {
       </div>
       <h3 className="mb-2 text-xl font-medium">{title}</h3>
       <p className="mb-6 text-muted-foreground">{description}</p>
-      <Button asChild>
-        <a href={actionLink}>{actionText}</a>
+      <Button onClick={() => navigate(actionLink)}>
+        {actionText}
       </Button>
     </div>
   )
 }
-

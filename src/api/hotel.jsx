@@ -57,3 +57,18 @@ export const getHotelBookings = async(userId) => {
 export const getHotelReviews = async (userId) => {
     return await API.get(`/hotel/hotel-reviews?user_id=${userId}`);
 }
+
+// Get hotel profile data
+export const getHotelProfile = async (userId) => {
+    return await API.get(`/hotel/profile/${userId}`);
+}
+
+// Update hotel profile data
+export const updateHotelProfile = async (userId, profileData) => {
+    return await API.put(`/hotel/profile/${userId}`, profileData);
+}
+
+
+
+
+

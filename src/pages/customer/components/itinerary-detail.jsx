@@ -147,6 +147,8 @@ export default function ItineraryDetailPage() {
     try {
       setLoading(true)
       const response = await getItineraryById(itineraryId)
+      console.log("Itinerary response:", response.data)
+      console.log("Ride Bookings:", response.data.rideBookings)
       setItinerary(response.data)
       setLoading(false)
     } catch (err) {
@@ -486,8 +488,8 @@ export default function ItineraryDetailPage() {
     try {
       const rideData = {
         pickupLocation: rideForm.pickupLocation,
-        dropLocation: rideForm.dropoffLocation,
-        pickupTime: new Date(rideForm.pickupDateTime).toISOString(),
+        dropoffLocation: rideForm.dropoffLocation,
+        pickupDateTime: new Date(rideForm.pickupDateTime).toISOString(),
         numberOfPersons: itinerary.numberOfPersons,
       }
 
@@ -505,7 +507,7 @@ export default function ItineraryDetailPage() {
         pickupDateTime: "",
       });
 
-      toast.success(`Your ${rideForm.type} ride has been booked successfully.`)
+      toast.success(`Your ride has been booked successfully.`)
     } catch (err) {
       toast.error("Failed to book ride")
       console.error(err)
@@ -518,8 +520,8 @@ export default function ItineraryDetailPage() {
     setRideForm({
       type: ride.type,
       pickupLocation: ride.pickupLocation,
-      dropoffLocation: ride.dropLocation,
-      pickupDateTime: format(new Date(ride.pickupTime), "yyyy-MM-dd'T'HH:mm"),
+      dropoffLocation: ride.dropoffLocation,
+      pickupDateTime: format(new Date(ride.pickupDateTime), "yyyy-MM-dd'T'HH:mm"),
       withDriverService: ride.withDriverService,
     })
     setShowEditRideDialog(true)
@@ -532,8 +534,8 @@ export default function ItineraryDetailPage() {
       const rideData = {
         type: rideForm.type,
         pickupLocation: rideForm.pickupLocation,
-        dropLocation: rideForm.dropoffLocation,
-        pickupTime: new Date(rideForm.pickupDateTime).toISOString(),
+        dropoffLocation: rideForm.dropoffLocation,
+        pickupDateTime: new Date(rideForm.pickupDateTime).toISOString(),
         withDriverService: rideForm.withDriverService,
       }
 
@@ -1142,20 +1144,11 @@ export default function ItineraryDetailPage() {
           <div className="mb-4 flex justify-between">
             <h2 className="text-xl font-bold">Transportation</h2>
             <Button
-              onClick={() => {
-                setRideForm({
-                  type: "taxi",
-                  pickupLocation: "",
-                  dropoffLocation: "",
-                  pickupDateTime: "",
-                  withDriverService: itinerary.driverServiceRequested,
-                })
-                setShowAddRideDialog(true)
-              }}
+              onClick={() => setShowAddRideDialog(true)}
               className="gap-2"
             >
               <PlusIcon className="h-4 w-4" />
-              Book Ride
+              Book More Rides
             </Button>
           </div>
 
@@ -1167,18 +1160,14 @@ export default function ItineraryDetailPage() {
                     <div className="flex flex-col justify-between gap-4 md:flex-row">
                       <div>
                         <div className="mb-2 flex items-center gap-2">
-                          <Badge variant={ride.status === "confirmed" ? "default" : "destructive"}>
+                          <Badge variant={ride.status === "confirmed" ? "default" : 
+                                  ride.status === "pending" ? "secondary" :
+                                  ride.status === "completed" ? "outline" : "destructive"}>
                             {ride.status.charAt(0).toUpperCase() + ride.status.slice(1)}
                           </Badge>
-                          <Badge variant="outline">{ride.type.charAt(0).toUpperCase() + ride.type.slice(1)}</Badge>
-                          {ride.withDriverService && (
-                            <Badge variant="outline" className="border-amber-500 text-amber-500">
-                              With Driver
-                            </Badge>
-                          )}
                         </div>
 
-                        <h4 className="font-medium">{format(new Date(ride.pickupTime), "MMM d, yyyy h:mm a")}</h4>
+                        <h4 className="font-medium">{format(new Date(ride.pickupDateTime), "MMM d, yyyy h:mm a")}</h4>
 
                         <div className="mt-2 space-y-1">
                           <div className="flex items-start gap-2 text-sm">
@@ -1193,23 +1182,21 @@ export default function ItineraryDetailPage() {
                             <MapPinIcon className="mt-0.5 h-4 w-4 text-muted-foreground" />
                             <div>
                               <p className="font-medium">Dropoff</p>
-                              <p className="text-muted-foreground">{ride.dropLocation}</p>
+                              <p className="text-muted-foreground">{ride.dropoffLocation}</p>
                             </div>
                           </div>
                         </div>
 
-                        {ride.status === "confirmed" && ride.driverName !== "To be assigned" && (
+                        {ride.status === "confirmed" && ride.driverName !== "Pending..." && (
                           <div className="mt-3 rounded-md bg-muted p-2 text-sm">
                             <p className="font-medium">Driver: {ride.driverName}</p>
-                            {ride.driverPhone && <p>Phone: {ride.driverPhone}</p>}
-                            {ride.vehicleInfo && <p>Vehicle: {ride.vehicleInfo}</p>}
                           </div>
                         )}
                       </div>
 
                       <div className="flex flex-col items-end justify-between">
                         <div className="flex gap-1">
-                          {ride.status === "confirmed" && (
+                          {(ride.status === "confirmed" || ride.status === "pending") && (
                             <>
                               <Button variant="ghost" size="icon" onClick={() => handleEditRide(ride)}>
                                 <PencilIcon className="h-4 w-4" />
@@ -1253,7 +1240,156 @@ export default function ItineraryDetailPage() {
           )}
         </TabsContent>
 
-        </Tabs>
+        <TabsContent value="reviews">
+          <div className="mb-4">
+            <h2 className="text-xl font-bold">Reviews</h2>
+            <p className="text-muted-foreground">View and manage reviews for your itinerary experiences.</p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <h3 className="text-lg font-bold">Your Reviews</h3>
+              </CardHeader>
+              <CardContent>
+                {itinerary.status === "completed" ? (
+                  <div className="space-y-4">
+                    <div className="flex justify-between rounded-lg border p-4">
+                      <div>
+                        <h4 className="font-medium">Itinerary Experience</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Rate your overall experience with this itinerary
+                        </p>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => handleOpenReviewDialog("itinerary")}>
+                        Write Review
+                      </Button>
+                    </div>
+
+                    {itinerary.roomItems &&
+                      itinerary.roomItems.map((room) => (
+                        <div key={room.id} className="flex justify-between rounded-lg border p-4">
+                          <div>
+                            <h4 className="font-medium">{room.roomName}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {room.hotelName}, {room.city}
+                            </p>
+                          </div>
+                          <Button variant="outline" size="sm" onClick={() => handleOpenReviewDialog(`room-${room.id}`)}>
+                            Write Review
+                          </Button>
+                        </div>
+                      ))}
+
+                    {itinerary.rideBookings &&
+                      itinerary.rideBookings
+                        .filter((ride) => ride.status !== "cancelled" && !ride.isReviewed)
+                        .map((ride) => (
+                          <div key={ride.id} className="flex justify-between rounded-lg border p-4">
+                            <div>
+                              <h4 className="font-medium">Ride Service</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {ride.type.charAt(0).toUpperCase() + ride.type.slice(1)} -{" "}
+                                {format(new Date(ride.pickupDateTime), "MMM d, yyyy")}
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleOpenReviewDialog(`ride-${ride.id}`)}
+                            >
+                              Write Review
+                            </Button>
+                          </div>
+                        ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center">
+                    <StarIcon className="mb-2 h-8 w-8 text-muted-foreground" />
+                    <h4 className="text-lg font-medium">No reviews available</h4>
+                    <p className="text-sm text-muted-foreground">
+                      You can write reviews after your itinerary is completed.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <h3 className="text-lg font-bold">Public Reviews</h3>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {itinerary.roomItems && itinerary.roomItems.length > 0 ? (
+                    itinerary.roomItems.map((room) => (
+                      <Accordion key={room.id} type="single" collapsible className="border rounded-lg">
+                        <AccordionItem value="reviews">
+                          <AccordionTrigger className="px-4">
+                            <div className="flex items-center gap-2">
+                              <span>
+                                {room.hotelName} - {room.roomName}
+                              </span>
+                              <Badge variant="outline">4.7 ★</Badge>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="px-4 pb-4">
+                            <div className="space-y-3">
+                              <div className="rounded-md bg-muted p-3">
+                                <div className="flex items-center justify-between">
+                                  <p className="font-medium">Sarah J.</p>
+                                  <div className="flex">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <StarIcon
+                                        key={star}
+                                        className={`h-4 w-4 ${star <= 5 ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted"}`}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                                <p className="mt-1 text-sm">
+                                  Excellent room with amazing views. The staff was very friendly and accommodating.
+                                </p>
+                              </div>
+
+                              <div className="rounded-md bg-muted p-3">
+                                <div className="flex items-center justify-between">
+                                  <p className="font-medium">Michael T.</p>
+                                  <div className="flex">
+                                    {[1, 2, 3, 4].map((star) => (
+                                      <StarIcon
+                                        key={star}
+                                        className={`h-4 w-4 ${star <= 4 ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted"}`}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                                <p className="mt-1 text-sm">
+                                  Great location and comfortable room. The breakfast could be improved.
+                                </p>
+                              </div>
+
+                              <Button variant="outline" size="sm" className="w-full" asChild>
+                                <Link to={`/hotels/${room.roomId}?tab=reviews`}>View All Reviews</Link>
+                              </Button>
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    ))
+                  ) : (
+                    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-6 text-center">
+                      <StarIcon className="mb-2 h-8 w-8 text-muted-foreground" />
+                      <h4 className="text-lg font-medium">No reviews to display</h4>
+                      <p className="text-sm text-muted-foreground">Add rooms to your itinerary to see their reviews.</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Add Room Dialog */}
       <Dialog open={showAddRoomDialog} onOpenChange={setShowAddRoomDialog}>

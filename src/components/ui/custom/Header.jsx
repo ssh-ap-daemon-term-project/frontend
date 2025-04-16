@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom"
 import { signout } from "../../../api/auth"
 
 export default function DashboardHeader() {
-  const { isAuthenticated, userType, contextSignout } = useContext(AuthContext);
+  const { isAuthenticated, userType, userName, email, contextSignout } = useContext(AuthContext);
 
   const handleSignout = async () => {
     try {
@@ -28,6 +28,23 @@ export default function DashboardHeader() {
     }
   }
   const navigate = useNavigate();
+
+  // Function to determine the correct profile path based on user type
+  const getProfilePath = () => {
+    switch(userType) {
+      case 'hotel':
+        return '/hotel/profile';
+      case 'customer':
+        return '/customer/profile';
+      case 'driver':
+        return '/driver/profile';
+      case 'admin':
+        return '/admin/profile';
+      default:
+        return '/profile';
+    }
+  };
+
   return (
     <header className="sticky shadow-sm px-3 top-0 z-40 border-b bg-background">
       <div className="container flex h-16 items-center justify-between py-4">
@@ -52,20 +69,20 @@ export default function DashboardHeader() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="/placeholder.svg" alt="Admin" />
-                    <AvatarFallback>AD</AvatarFallback>
-                  </Avatar>
+                    <AvatarImage src="/placeholder.svg" alt={userName || "User"} />
+                    <AvatarFallback>{userName ? userName[0].toUpperCase() : 'U'}</AvatarFallback>
+                    </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Admin</p>
-                    <p className="text-xs leading-none text-muted-foreground">admin@hotel.com</p>
+                    <p className="text-sm font-medium leading-none">{userName || "User"}</p>
+                    <p className="text-xs leading-none text-muted-foreground">{email || ""}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/hotel/profile")}>Profile</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate(getProfilePath())}>Profile</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignout}>Sign out</DropdownMenuItem>
               </DropdownMenuContent>

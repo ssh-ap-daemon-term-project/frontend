@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CompletedTrips } from "./components/completed-trips"
+import { AcceptedTrips } from "./components/accepted-trips"
 import { PendingRequests } from "./components/pending-requests"
 
 export const Metadata = {
@@ -37,7 +37,7 @@ const DriverPage = () => {
         <Tabs defaultValue="requests" className="space-y-4">
           <TabsList>
             <TabsTrigger value="requests">Ride Requests</TabsTrigger>
-            <TabsTrigger value="completed">Completed Trips</TabsTrigger>
+            <TabsTrigger value="completed">Accepted Trips</TabsTrigger>
           </TabsList>
 
           <TabsContent value="requests" className="space-y-4">
@@ -45,7 +45,7 @@ const DriverPage = () => {
           </TabsContent>
 
           <TabsContent value="completed" className="space-y-4">
-            <CompletedTrips />
+            <AcceptedTrips />
           </TabsContent>
           
         </Tabs>

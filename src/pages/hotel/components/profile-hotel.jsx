@@ -1,137 +1,388 @@
-import { useState } from "react";
-// import { useQuery, useMutation } from "@tanstack/react-query";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
-import ProfileCardHotel from "./profile-card";
-import HotelAdminEditForm from "./profile-edit";
+"use client"
 
-//mock data
-let hotel = {
-    name: "Hotel A",
-    address: "123 Main St, City",
-    rating: 4.5,
-    location: "New York",
-    phone: "123-456-7890",
-    email: "pB0kS@example.com",
-    username: "hoteluser",
-    description: "A luxurious hotel located in the heart of New York City.",
-}
+import { useState, useEffect, useContext } from "react"
+import { AuthContext } from "@/context/AuthContext"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { toast } from "react-toastify"
+import { Loader2, Building, Star, MapPin, Phone, Mail, Check, Edit } from "lucide-react"
 
-export default function HotelProfile() {
-//   const { toast } = useToast();
-  const [isEditing, setIsEditing] = useState(false);
-  
-  // Fetch hotel data
-//   const { data: hotel, isLoading, error } = useQuery<Hotel>({
-//     queryKey: ['/api/hotel'],
-//   });
-  
+// Import the necessary API functions
+import { getHotelProfile, updateHotelProfile } from "@/api/hotel.jsx"
 
-  // Update hotel mutation
-//   const updateHotelMutation = useMutation({
-//     mutationFn: async (data: UpdateHotel) => {
-//       const res = await apiRequest('PATCH', '/api/hotel/1', data);
-//       return res.json();
-//     },
-//     onSuccess: () => {
-//       queryClient.invalidateQueries({ queryKey: ['/api/hotel'] });
-//       setIsEditing(false);
-//       toast({
-//         title: "Profile Updated",
-//         description: "Your hotel profile has been updated successfully",
-//         variant: "success",
-//       });
-//     },
-//     onError: (error) => {
-//       toast({
-//         title: "Update Failed",
-//         description: error.message || "There was a problem updating your profile",
-//         variant: "destructive",
-//       });
-//     },
-//   });
+export function HotelProfile() {
+  const { userId, userName, email } = useContext(AuthContext)
+  const [loading, setLoading] = useState(true)
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [hotelProfile, setHotelProfile] = useState(null)
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    city: "",
+    description: "",
+  })
 
-  const handleEditClick = () => {
-    setIsEditing(true);
-  };
+  useEffect(() => {
+    async function fetchHotelProfile() {
+      if (!userId) return
+      
+      try {
+        setLoading(true)
+        const response = await getHotelProfile(userId)
+        
+        if (response.status === 200) {
+          setHotelProfile(response.data)
+          setFormData({
+            name: response.data.name || "",
+            email: response.data.email || "",
+            phone: response.data.phone || "",
+            address: response.data.address || "",
+            city: response.data.city || "",
+            description: response.data.description || "",
+          })
+        }
+      } catch (error) {
+        console.error("Failed to fetch hotel profile:", error)
+        toast.error("Failed to load hotel profile")
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  const handleCancel = () => {
-    setIsEditing(false);
-  };
+    fetchHotelProfile()
+  }, [userId])
 
-//   const handleSave = (data: UpdateHotel) => {
-//     updateHotelMutation.mutate(data);
-//   };
+  const handleInputChange = (e) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
 
-//   if (isLoading) {
-//     return (
-//       <div className="container mx-auto p-4 sm:p-6 md:p-8">
-//         <div className="mb-8 flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-//           <div className="animate-pulse">
-//             <div className="h-8 bg-slate-200 rounded w-64 mb-2"></div>
-//             <div className="h-4 bg-slate-200 rounded w-48"></div>
-//           </div>
-//           <div className="h-10 bg-slate-200 rounded w-32"></div>
-//         </div>
-//         <div className="animate-pulse space-y-6">
-//           <div className="h-64 bg-slate-200 rounded"></div>
-//           <div className="h-48 bg-slate-200 rounded"></div>
-//           <div className="h-64 bg-slate-200 rounded"></div>
-//         </div>
-//       </div>
-//     );
-//   }
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    
+    try {
+      setSaving(true)
+      
+      const response = await updateHotelProfile(userId, updatedProfile)
+      
+      if (response.status === 200) {
+        setHotelProfile(response.data)
+        setEditing(false)
+        toast.success("Profile updated successfully")
+      }
+    } catch (error) {
+      console.error("Failed to update profile:", error)
+      toast.error("Failed to update profile")
+    } finally {
+      setSaving(false)
+    }
+  }
 
-//   if (error || !hotel) {
-//     return (
-//       <div className="container mx-auto p-4 sm:p-6 md:p-8">
-//         <div className="bg-red-50 border border-red-200 rounded-md p-4">
-//           <h3 className="text-lg font-medium text-red-800">Error loading profile</h3>
-//           <p className="text-sm text-red-700 mt-1">
-//             {error instanceof Error ? error.message : "Unable to load hotel profile data"}
-//           </p>
-
-//           {/* //Retry button */}
-//           {/* <Button 
-//             variant="outline" 
-//             className="mt-4" 
-//             onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/hotel'] })}
-//           >
-//             Retry
-//           </Button> */}
-//         </div>
-//       </div>
-//     );
-//   }
+  if (loading) {
+    return (
+      <div className="flex h-48 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading hotel profile...</span>
+      </div>
+    )
+  }
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 md:p-8">
-      <div className="mb-8 flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Hotel Admin Profile</h1>
-          <p className="text-sm text-slate-500">Manage your hotel information and account details</p>
-        </div>
-        <Button onClick={handleEditClick} className="h-10">
-          <Edit className="mr-2 h-4 w-4" />
-          Edit Profile
-        </Button>
-      </div>
-
-      <ProfileCardHotel hotel = {hotel} />
+    <div className="space-y-8">
+      <Card>
+        <CardHeader className="relative pb-0">
+          
+          <div className="flex flex-col items-center sm:flex-row sm:items-start sm:space-x-6">
+            <Avatar className="h-24 w-24">
+              <AvatarImage src="/placeholder.svg" alt={hotelProfile?.name} />
+              <AvatarFallback>
+                <Building className="h-12 w-12" />
+              </AvatarFallback>
+            </Avatar>
+            
+            <div className="text-center sm:text-left">
+              {editing ? (
+                <Input 
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="mt-2 text-xl font-bold"
+                />
+              ) : (
+                <h2 className="text-2xl font-bold">{hotelProfile?.name}</h2>
+              )}
+              
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground sm:justify-start">
+                <div className="flex items-center">
+                  <MapPin className="mr-1 h-4 w-4" />
+                  {editing ? (
+                    <Input 
+                      name="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                      className="h-8"
+                    />
+                  ) : (
+                    <span>{hotelProfile?.city}</span>
+                  )}
+                </div>
+                
+                <div className="flex items-center">
+                  <Star className="mr-1 h-4 w-4 fill-yellow-400 text-yellow-400" />
+                  <span>{hotelProfile?.rating || "No ratings yet"}</span>
+                </div>
+                
+                <div className="flex items-center">
+                  <Building className="mr-1 h-4 w-4" />
+                  <span>{hotelProfile?.totalRooms || 0} Rooms</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        
+        <CardContent className="pt-6">
+          <Tabs defaultValue="about" className="w-full">
+            <TabsList>
+              <TabsTrigger value="about">About</TabsTrigger>
+              <TabsTrigger value="contact">Contact</TabsTrigger>
+              <TabsTrigger value="rooms">Rooms</TabsTrigger>
+              <TabsTrigger value="reviews">Reviews</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="about" className="space-y-4">
+              <form id="profile-form" onSubmit={handleSubmit}>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-medium">Hotel Description</h3>
+                    {editing ? (
+                      <Textarea
+                        name="description"
+                        value={formData.description}
+                        onChange={handleInputChange}
+                        placeholder="Describe your hotel..."
+                        className="mt-2 h-32"
+                      />
+                    ) : (
+                      <p className="mt-2 text-muted-foreground">
+                        {hotelProfile?.description || "No description provided."}
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-medium">Address</h3>
+                    {editing ? (
+                      <Input
+                        name="address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        placeholder="Hotel address"
+                        className="mt-2"
+                      />
+                    ) : (
+                      <p className="mt-2 text-muted-foreground">
+                        {hotelProfile?.address || "No address provided."}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="contact">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-medium">Contact Information</h3>
+                  <div className="mt-4 space-y-3">
+                    <div className="flex items-center">
+                      <Mail className="mr-2 h-5 w-5 text-muted-foreground" />
+                      {editing ? (
+                        <Input
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          placeholder="Email address"
+                        />
+                      ) : (
+                        <span>{hotelProfile?.email}</span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center">
+                      <Phone className="mr-2 h-5 w-5 text-muted-foreground" />
+                      {editing ? (
+                        <Input
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          placeholder="Phone number"
+                        />
+                      ) : (
+                        <span>{hotelProfile?.phone}</span>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-start">
+                      <MapPin className="mr-2 h-5 w-5 text-muted-foreground" />
+                      <div>
+                        {editing ? (
+                          <div className="space-y-2">
+                            <Input
+                              name="address"
+                              value={formData.address}
+                              onChange={handleInputChange}
+                              placeholder="Address"
+                            />
+                            <Input
+                              name="city"
+                              value={formData.city}
+                              onChange={handleInputChange}
+                              placeholder="City"
+                            />
+                          </div>
+                        ) : (
+                          <div>
+                            <p>{hotelProfile?.address}</p>
+                            <p>{hotelProfile?.city}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="rooms">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium">Hotel Rooms</h3>
+                </div>
+                
+                {hotelProfile?.rooms && hotelProfile.rooms.length > 0 ? (
+                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {hotelProfile.rooms.map(room => (
+                      <Card key={room.id}>
+                        <CardContent className="p-4">
+                          <div className="aspect-video overflow-hidden rounded-md bg-muted">
+                            {room.image ? (
+                              <img 
+                                src={room.image} 
+                                alt={room.type} 
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-full items-center justify-center">
+                                <Building className="h-8 w-8 text-muted-foreground" />
+                              </div>
+                            )}
+                          </div>
+                          <h4 className="mt-2 font-medium">{room.type}</h4>
+                          <div className="mt-2 flex justify-between text-sm">
+                            <span>Capacity: {room.roomCapacity}</span>
+                            <span className="font-medium">${room.basePrice}/night</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-dashed p-8 text-center">
+                    <Building className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <h3 className="mt-2 text-lg font-medium">No rooms added yet</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Start adding rooms to your hotel profile.
+                    </p>
+                    <Button className="mt-4">Add Your First Room</Button>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="reviews">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Customer Reviews</h3>
+                
+                {hotelProfile?.reviews && hotelProfile.reviews.length > 0 ? (
+                  <div className="space-y-4">
+                    {hotelProfile.reviews.map(review => (
+                      <div key={review.id} className="rounded-lg border p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <Avatar className="h-8 w-8 mr-2">
+                              <AvatarFallback>{review.customerName.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium">{review.customerName}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(review.date).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center">
+                            {[...Array(5)].map((_, i) => (
+                              <Star 
+                                key={i}
+                                className={`h-4 w-4 ${i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-muted"}`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <p className="mt-2 text-sm">{review.comment}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-md border border-dashed p-8 text-center">
+                    <Star className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <h3 className="mt-2 text-lg font-medium">No reviews yet</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Reviews will appear here as customers leave feedback.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
       
-      
-
-      {/* <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <DialogContent className="sm:max-w-[600px]">
-          <HotelAdminEditForm
-            hotelAdmin={hotel} 
-            // onSave={handleSave} 
-            // onCancel={handleCancel} 
-            // isLoading={updateHotelMutation.isPending} 
-          />
-        </DialogContent>
-      </Dialog> */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Hotel Performance</CardTitle>
+          <CardDescription>View your hotel's booking statistics</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-lg border p-4">
+              <h4 className="text-sm font-medium text-muted-foreground">Total Bookings</h4>
+              <p className="mt-2 text-3xl font-bold">{hotelProfile?.stats?.totalBookings || 0}</p>
+            </div>
+            <div className="rounded-lg border p-4">
+              <h4 className="text-sm font-medium text-muted-foreground">Occupancy Rate</h4>
+              <p className="mt-2 text-3xl font-bold">{hotelProfile?.stats?.occupancyRate || 0}%</p>
+            </div>
+            <div className="rounded-lg border p-4">
+              <h4 className="text-sm font-medium text-muted-foreground">Average Rating</h4>
+              <p className="mt-2 text-3xl font-bold">{hotelProfile?.rating || "N/A"}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
-  );
+  )
 }
+
+export default HotelProfile

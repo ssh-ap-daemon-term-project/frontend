@@ -13,9 +13,7 @@ export function RecentBookings() {
     async function fetchData() {
       try {
         const response = await getRecentBookings();
-        if (!response.ok) {
-          setBookings([]);
-        } else {
+        if (response.status === 200) {
           setBookings(response.data);
         }
       } catch (error) {
@@ -47,21 +45,14 @@ export function RecentBookings() {
               <AvatarFallback>{booking.initials}</AvatarFallback>
             </Avatar>
             <div>
-              <p className="text-sm font-medium leading-none">{booking.customer}</p>
+              <p className="text-sm font-medium leading-none">{booking.username}</p>
               <p className="text-sm text-muted-foreground">
-                {booking.startDate} to {booking.endDate}
+                {new Date(booking.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} to {new Date(booking.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
             <Badge variant="outline">{booking.roomType}</Badge>
-            <Badge
-              variant={
-                booking.status === "confirmed" ? "default" : booking.status === "pending" ? "secondary" : "destructive"
-              }
-            >
-              {booking.status}
-            </Badge>
           </div>
         </div>
       ))}

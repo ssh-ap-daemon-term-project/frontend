@@ -1,321 +1,349 @@
-import { Badge } from "@/components/ui/badge"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Separator } from "@/components/ui/separator"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+"use client"
+
+import { useState, useEffect, useContext } from "react"
+import { AuthContext } from "../../../context/AuthContext"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../../components/ui/card"
+import { Input } from "../../../components/ui/input"
+import { Button } from "../../../components/ui/button"
+import { Textarea } from "../../../components/ui/textarea"
+import { Label } from "../../../components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../../components/ui/tabs"
+import { Avatar, AvatarFallback, AvatarImage } from "../../../components/ui/avatar"
 import { toast } from "react-toastify"
-import { CalendarIcon, CreditCardIcon, UserIcon, LockIcon, LogOutIcon } from "lucide-react"
+import { 
+  Loader2, 
+  User, 
+  MapPin, 
+  Phone, 
+  Mail, 
+  Check, 
+  Edit,
+  Briefcase,
+  Calendar,
+  Clock,
+  CreditCard,
+  Heart,
+  Globe
+} from "lucide-react"
+import { getCustomerProfile } from "../../../api/customer"
+import { Link } from "react-router-dom"
+import { format } from "date-fns"
 
-// Mock user data
-const mockUser = {
-  id: 1,
-  username: "johndoe",
-  email: "john.doe@example.com",
-  phone: "+1 (555) 123-4567",
-  name: "John Doe",
-  dob: "1990-05-15",
-  gender: "male",
-  createdAt: "2022-01-15",
-}
+export function CustomerProfile() {
+  const { userId, userName, email } = useContext(AuthContext)
+  const [profile, setProfile] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-export default function ProfilePage() {
-  const [user, setUser] = useState(mockUser)
-  const [profileForm, setProfileForm] = useState({
-    name: user.name,
-    email: user.email,
-    phone: user.phone,
-    dob: user.dob,
-    gender: user.gender,
-  })
-
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  })
-
-  const handleProfileUpdate = (e) => {
-    e.preventDefault()
-    // In a real app, you would call an API to update the profile
-    setUser({
-      ...user,
-      name: profileForm.name,
-      email: profileForm.email,
-      phone: profileForm.phone,
-      dob: profileForm.dob,
-      gender: profileForm.gender,
-    })
-
-    toast({
-      title: "Profile Updated",
-      description: "Your profile information has been updated successfully.",
-    })
-  }
-
-  const handlePasswordUpdate = (e) => {
-    e.preventDefault()
-
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      toast({
-        title: "Passwords Don't Match",
-        description: "New password and confirm password must match.",
-        variant: "destructive",
-      })
-      return
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        setLoading(true)
+        const response = await getCustomerProfile()
+        setProfile(response.data)
+      } catch (error) {
+        console.error("Failed to fetch customer profile:", error)
+        toast.error("Could not load profile data")
+      } finally {
+        setLoading(false)
+      }
     }
 
-    // In a real app, you would call an API to update the password
+    fetchProfile()
+  }, [])
 
-    setPasswordForm({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    })
-
-    toast({
-      title: "Password Updated",
-      description: "Your password has been updated successfully.",
-    })
+  if (loading) {
+    return (
+      <div className="flex h-[500px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading customer profile...</span>
+      </div>
+    )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 flex flex-col items-center justify-center md:flex-row md:items-start md:justify-start md:gap-8">
-        <div className="mb-4 md:mb-0">
-          <Avatar className="h-24 w-24">
-            <AvatarImage src="/placeholder.svg?height=96&width=96" alt={user.name} />
-            <AvatarFallback>
-              {user.name
-                .split(" ")
-                .map((n) => n[0])
-                .join("")}
-            </AvatarFallback>
-          </Avatar>
-        </div>
-
-        <div className="text-center md:text-left">
-          <h1 className="text-3xl font-bold">{user.name}</h1>
-          <p className="text-muted-foreground">Member since {new Date(user.createdAt).toLocaleDateString()}</p>
-
-          <div className="mt-4 flex flex-wrap justify-center gap-2 md:justify-start">
-            <Button variant="outline" size="sm" className="gap-2">
-              <UserIcon className="h-4 w-4" />
-              Edit Profile
-            </Button>
-            <Button variant="outline" size="sm" className="gap-2">
-              <LogOutIcon className="h-4 w-4" />
-              Sign Out
-            </Button>
+    <div className="space-y-8">
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <Avatar className="h-20 w-20">
+              <AvatarImage src="/placeholder.svg" alt={profile?.name} />
+              <AvatarFallback>
+                <User className="h-10 w-10" />
+              </AvatarFallback>
+            </Avatar>
+            
+            <div>
+              <CardTitle className="text-2xl">{profile?.name}</CardTitle>
+              <CardDescription className="text-lg">{profile?.email}</CardDescription>
+              
+              <div className="mt-2 flex flex-wrap gap-2">
+                <div className="flex items-center">
+                  <Briefcase className="mr-1 h-4 w-4 text-muted-foreground" />
+                  <span>{profile?.totalTrips || 0} trips</span>
+                </div>
+                <div className="flex items-center ml-2">
+                  <Clock className="mr-1 h-4 w-4 text-muted-foreground" />
+                  <span>Member since {profile?.createdAt ? format(new Date(profile.createdAt), 'MMMM yyyy') : "N/A"}</span>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-
-      <Tabs defaultValue="profile" className="mb-8">
-        <TabsList className="mb-4">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="payment">Payment Methods</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="profile">
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
-              <CardDescription>Update your personal information</CardDescription>
-            </CardHeader>
-            <form onSubmit={handleProfileUpdate}>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input
-                      id="name"
-                      value={profileForm.name}
-                      onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={profileForm.email}
-                      onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input
-                      id="phone"
-                      value={profileForm.phone}
-                      onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="dob">Date of Birth</Label>
-                    <div className="relative">
-                      <CalendarIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        id="dob"
-                        type="date"
-                        className="pl-9"
-                        value={profileForm.dob}
-                        onChange={(e) => setProfileForm({ ...profileForm, dob: e.target.value })}
-                      />
+        </CardHeader>
+        
+        <CardContent>
+          <Tabs defaultValue="info" className="w-full">
+            <TabsList>
+              <TabsTrigger value="info">Personal Info</TabsTrigger>
+              <TabsTrigger value="trips">My Trips</TabsTrigger>
+              <TabsTrigger value="preferences">Preferences</TabsTrigger>
+              <TabsTrigger value="payment">Payment Methods</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="info" className="space-y-4 pt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-medium mb-3">Contact Information</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center">
+                      <Mail className="mr-2 h-5 w-5 text-muted-foreground" />
+                      <span>{profile?.email}</span>
+                    </div>
+                    <div className="flex items-center">
+                      <Phone className="mr-2 h-5 w-5 text-muted-foreground" />
+                      <span>{profile?.phoneNumber || "Not provided"}</span>
+                    </div>
+                    <div className="flex items-start">
+                      <MapPin className="mr-2 h-5 w-5 text-muted-foreground mt-1" />
+                      <span>{profile?.address || "Not provided"}</span>
                     </div>
                   </div>
+                  
+                  <Button className="mt-4" variant="outline">
+                    <Edit className="mr-2 h-4 w-4" />
+                    Edit Information
+                  </Button>
                 </div>
-
-                <div className="space-y-2">
-                  <Label>Gender</Label>
-                  <RadioGroup
-                    value={profileForm.gender}
-                    onValueChange={(value) => setProfileForm({ ...profileForm, gender: value })}
-                    className="flex gap-4"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="male" id="male" />
-                      <Label htmlFor="male">Male</Label>
+                
+                <div>
+                  <h3 className="text-lg font-medium mb-3">Account Statistics</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center">
+                      <Calendar className="mr-2 h-5 w-5 text-muted-foreground" />
+                      <span>{profile?.activeItineraries || 0} Active Itineraries</span>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="female" id="female" />
-                      <Label htmlFor="female">Female</Label>
+                    <div className="flex items-center">
+                      <Check className="mr-2 h-5 w-5 text-muted-foreground" />
+                      <span>{profile?.completedItineraries || 0} Completed Trips</span>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="other" id="other" />
-                      <Label htmlFor="other">Other</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button type="submit">Save Changes</Button>
-              </CardFooter>
-            </form>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>Security Settings</CardTitle>
-              <CardDescription>Update your password and security preferences</CardDescription>
-            </CardHeader>
-            <form onSubmit={handlePasswordUpdate}>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="currentPassword">Current Password</Label>
-                  <div className="relative">
-                    <LockIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="currentPassword"
-                      type="password"
-                      className="pl-9"
-                      value={passwordForm.currentPassword}
-                      onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                      required
-                    />
                   </div>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword">New Password</Label>
-                  <div className="relative">
-                    <LockIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="newPassword"
-                      type="password"
-                      className="pl-9"
-                      value={passwordForm.newPassword}
-                      onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                  <div className="relative">
-                    <LockIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      className="pl-9"
-                      value={passwordForm.confirmPassword}
-                      onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button type="submit">Update Password</Button>
-              </CardFooter>
-            </form>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="payment">
-          <Card>
-            <CardHeader>
-              <CardTitle>Payment Methods</CardTitle>
-              <CardDescription>Manage your saved payment methods</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="rounded-lg border p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-md bg-muted p-2">
-                        <CreditCardIcon className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Visa ending in 4242</p>
-                        <p className="text-sm text-muted-foreground">Expires 12/25</p>
-                      </div>
-                    </div>
-                    <Badge>Default</Badge>
-                  </div>
-                </div>
-
-                <div className="rounded-lg border p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-md bg-muted p-2">
-                        <CreditCardIcon className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="font-medium">Mastercard ending in 5555</p>
-                        <p className="text-sm text-muted-foreground">Expires 08/24</p>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm">
-                      Make Default
-                    </Button>
+                  
+                  <div className="p-4 bg-muted rounded-md mt-4">
+                    <h4 className="font-medium mb-2">Verification Status</h4>
+                    <p className={profile?.isVerified ? "text-green-600" : "text-amber-600"}>
+                      {profile?.isVerified ? "Verified Customer" : "Verification Pending"}
+                    </p>
+                    
+                    {!profile?.isVerified && (
+                      <Button className="mt-2" size="sm">Verify Account</Button>
+                    )}
                   </div>
                 </div>
               </div>
-            </CardContent>
-            <CardFooter>
-              <Button variant="outline">Add Payment Method</Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </TabsContent>
+            
+            <TabsContent value="trips" className="space-y-4 pt-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">My Itineraries</h3>
+                <Button size="sm" asChild>
+                  <Link to="/customer">View All</Link>
+                </Button>
+              </div>
+              
+              {profile?.totalTrips > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* This would normally map through actual itineraries */}
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium">Summer European Tour</h4>
+                          <div className="flex items-center mt-1 text-sm text-muted-foreground">
+                            <Calendar className="mr-1 h-4 w-4" />
+                            <span>Jun 12 - Jun 26, 2025</span>
+                          </div>
+                          <div className="flex items-center mt-1 text-sm text-muted-foreground">
+                            <Globe className="mr-1 h-4 w-4" />
+                            <span>Paris, Rome, Barcelona</span>
+                          </div>
+                        </div>
+                        <div className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                          Upcoming
+                        </div>
+                      </div>
+                      <Button size="sm" className="mt-4" variant="outline" asChild>
+                        <Link to="/itineraries/1">View Details</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium">Hawaii Vacation</h4>
+                          <div className="flex items-center mt-1 text-sm text-muted-foreground">
+                            <Calendar className="mr-1 h-4 w-4" />
+                            <span>Jan 5 - Jan 15, 2025</span>
+                          </div>
+                          <div className="flex items-center mt-1 text-sm text-muted-foreground">
+                            <Globe className="mr-1 h-4 w-4" />
+                            <span>Honolulu, Maui</span>
+                          </div>
+                        </div>
+                        <div className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">
+                          Completed
+                        </div>
+                      </div>
+                      <Button size="sm" className="mt-4" variant="outline" asChild>
+                        <Link to="/itineraries/2">View Details</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </div>
+              ) : (
+                <div className="text-center p-8 border border-dashed rounded-md">
+                  <Briefcase className="mx-auto h-10 w-10 text-muted-foreground" />
+                  <h3 className="mt-4 text-lg font-medium">No trips yet</h3>
+                  <p className="mt-2 text-muted-foreground">Plan your first adventure today!</p>
+                  <Button className="mt-4" asChild>
+                    <Link to="/customer/new-itinerary">Plan a Trip</Link>
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="preferences" className="space-y-4 pt-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Travel Preferences</h3>
+                <Button size="sm" variant="outline">
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Preferences
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h4 className="font-medium mb-2">Accommodation Preferences</h4>
+                  <div className="space-y-2 p-4 border rounded-md">
+                    <div className="flex justify-between items-center">
+                      <span>Preferred Hotel Type</span>
+                      <span className="text-sm font-medium">Luxury</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Room Type</span>
+                      <span className="text-sm font-medium">Suite</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Budget Range (per night)</span>
+                      <span className="text-sm font-medium">$200 - $500</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="font-medium mb-2">Transportation Preferences</h4>
+                  <div className="space-y-2 p-4 border rounded-md">
+                    <div className="flex justify-between items-center">
+                      <span>Preferred Car Type</span>
+                      <span className="text-sm font-medium">SUV</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Airport Transfer</span>
+                      <span className="text-sm font-medium">Always</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Driver Service</span>
+                      <span className="text-sm font-medium">Sometimes</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="md:col-span-2">
+                  <h4 className="font-medium mb-2">Favorite Destinations</h4>
+                  <div className="flex flex-wrap gap-2">
+                    <div className="py-1 px-3 bg-muted rounded-full text-sm">Paris</div>
+                    <div className="py-1 px-3 bg-muted rounded-full text-sm">New York</div>
+                    <div className="py-1 px-3 bg-muted rounded-full text-sm">Tokyo</div>
+                    <div className="py-1 px-3 bg-muted rounded-full text-sm">Bali</div>
+                    <div className="py-1 px-3 bg-muted rounded-full text-sm">Barcelona</div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="payment" className="space-y-4 pt-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Payment Methods</h3>
+                <Button size="sm">
+                  Add Payment Method
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center">
+                        <div className="h-10 w-14 bg-blue-900 rounded-md flex items-center justify-center text-white font-bold mr-4">
+                          VISA
+                        </div>
+                        <div>
+                          <p className="font-medium">Visa ending in 4242</p>
+                          <p className="text-sm text-muted-foreground">Expires 04/26</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline">Edit</Button>
+                        <Button size="sm" variant="outline">Remove</Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center">
+                        <div className="h-10 w-14 bg-red-600 rounded-md flex items-center justify-center text-white font-bold mr-4">
+                          MC
+                        </div>
+                        <div>
+                          <p className="font-medium">Mastercard ending in 8888</p>
+                          <p className="text-sm text-muted-foreground">Expires 09/25</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline">Edit</Button>
+                        <Button size="sm" variant="outline">Remove</Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              
+              <div className="p-4 bg-muted rounded-md mt-4">
+                <h4 className="font-medium mb-2">Billing Address</h4>
+                <p>{profile?.address || "No billing address provided"}</p>
+                <Button size="sm" variant="outline" className="mt-2">
+                  Update Billing Address
+                </Button>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
     </div>
   )
 }
 
+export default CustomerProfile

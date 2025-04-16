@@ -113,3 +113,7 @@ export const updateReview = async (reviewId, reviewData) => {
 export const deleteReview = async (reviewId) => {
     return await API.delete(`/customer/reviews/${reviewId}`);
 };
+
+export const getCustomerProfile = async () => {
+    return await API.get('/customer/profile');
+};

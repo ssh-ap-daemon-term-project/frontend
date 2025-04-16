@@ -96,7 +96,6 @@ export function AdminProfile() {
             <TabsList>
               <TabsTrigger value="info">Account Info</TabsTrigger>
               <TabsTrigger value="permissions">Permissions</TabsTrigger>
-              <TabsTrigger value="security">Security</TabsTrigger>
               <TabsTrigger value="stats">System Stats</TabsTrigger>
             </TabsList>
             
@@ -118,11 +117,6 @@ export function AdminProfile() {
                       <span>{profile?.department || "Operations"}</span>
                     </div>
                   </div>
-                  
-                  <Button className="mt-4" variant="outline">
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Information
-                  </Button>
                 </div>
                 
                 <div>
@@ -135,10 +129,6 @@ export function AdminProfile() {
                     <div className="flex items-center">
                       <Clock className="mr-2 h-5 w-5 text-muted-foreground" />
                       <span>Account created: {profile?.createdAt ? format(new Date(profile.createdAt), 'PP') : "N/A"}</span>
-                    </div>
-                    <div className="flex items-center">
-                      <Activity className="mr-2 h-5 w-5 text-muted-foreground" />
-                      <span>Last login: {profile?.lastLogin ? format(new Date(profile.lastLogin), 'PP pp') : "N/A"}</span>
                     </div>
                   </div>
                   
@@ -156,10 +146,6 @@ export function AdminProfile() {
             <TabsContent value="permissions" className="space-y-4 pt-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium">Administrative Permissions</h3>
-                <Button size="sm" variant="outline">
-                  <Edit className="mr-2 h-4 w-4" />
-                  Manage Permissions
-                </Button>
               </div>
               
               <Card>
@@ -187,62 +173,6 @@ export function AdminProfile() {
                   As an administrator, you have full access to manage the system,
                   including users, bookings, settings, and reports.
                 </p>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="security" className="space-y-4 pt-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">Account Security</h3>
-              </div>
-              
-              <div className="space-y-4">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mr-4">
-                          <KeyRound className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium">Password</p>
-                          <p className="text-sm text-muted-foreground">Last changed: 30 days ago</p>
-                        </div>
-                      </div>
-                      <Button variant="outline">Change Password</Button>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mr-4">
-                          <Settings className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-medium">Two-Factor Authentication</p>
-                          <p className="text-sm text-muted-foreground">Not enabled</p>
-                        </div>
-                      </div>
-                      <Button>Enable 2FA</Button>
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <div className="p-4 bg-muted rounded-md">
-                  <h4 className="font-medium mb-2">Security Recommendations</h4>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-start">
-                      <span className="h-5 w-5 text-red-500 mr-2">⚠️</span>
-                      <span>Enable two-factor authentication for additional security.</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="h-5 w-5 text-yellow-500 mr-2">⚠️</span>
-                      <span>Your password is more than 30 days old. Consider updating it.</span>
-                    </li>
-                  </ul>
-                </div>
               </div>
             </TabsContent>
             
@@ -290,33 +220,6 @@ export function AdminProfile() {
                   </CardContent>
                 </Card>
               </div>
-              
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle>System Health</CardTitle>
-                  <CardDescription>Current system performance metrics</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span>Database Connections</span>
-                      <Badge className="bg-green-100 text-green-800">Healthy</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>API Response Time</span>
-                      <Badge className="bg-green-100 text-green-800">120ms</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>Server Load</span>
-                      <Badge className="bg-green-100 text-green-800">25%</Badge>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span>Storage Usage</span>
-                      <Badge className="bg-yellow-100 text-yellow-800">78%</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </TabsContent>
           </Tabs>
         </CardContent>

@@ -17,6 +17,7 @@ import { format } from "date-fns"
 import { toast } from "react-toastify"
 import { useNavigate } from "react-router-dom"
 import { getBookings, cancelBooking, postReview } from "@/api/customer"
+import { HotelIcon } from "lucide-react"
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState([])
@@ -24,7 +25,7 @@ export default function BookingsPage() {
   const [selectedBooking, setSelectedBooking] = useState(null)
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [cancelling, setCancelling] = useState(false)
-  
+
   // Review dialog state
   const [showReviewDialog, setShowReviewDialog] = useState(false)
   const [bookingToReview, setBookingToReview] = useState(null)
@@ -32,7 +33,7 @@ export default function BookingsPage() {
   const [reviewComment, setReviewComment] = useState("")
   const [hoverRating, setHoverRating] = useState(0)
   const [submittingReview, setSubmittingReview] = useState(false)
-  
+
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -43,7 +44,7 @@ export default function BookingsPage() {
     try {
       setLoading(true)
       const response = await getBookings()
-      
+
       // Convert date strings to Date objects
       const formattedBookings = response.data.map(booking => ({
         ...booking,
@@ -72,10 +73,10 @@ export default function BookingsPage() {
     try {
       setCancelling(true)
       await cancelBooking(selectedBooking.id)
-      
+
       // Update local state
       setBookings(
-        bookings.map((booking) => 
+        bookings.map((booking) =>
           booking.id === selectedBooking.id ? { ...booking, status: "cancelled" } : booking
         )
       )
@@ -88,7 +89,7 @@ export default function BookingsPage() {
       setCancelling(false)
     }
   }
-  
+
   // Handle opening the review dialog
   const handleOpenReviewDialog = (booking) => {
     setBookingToReview(booking)
@@ -96,25 +97,25 @@ export default function BookingsPage() {
     setReviewComment("")
     setShowReviewDialog(true)
   }
-  
+
   // Handle submitting the review
   const handleSubmitReview = async () => {
     if (reviewRating === 0) {
       toast.error("Please select a rating")
       return
     }
-    
+
     try {
       setSubmittingReview(true)
       await postReview(bookingToReview.id, reviewRating, reviewComment)
-      
+
       toast.success("Thank you for your review!")
       setShowReviewDialog(false)
-      
+
       // Optionally mark the booking as reviewed in the UI
       // This depends on your backend implementation
     } catch (error) {
-      toast.error(error.message || "Failed to submit review. Please try again.")
+      toast.error(error?.response?.data?.detail || "Failed to submit review. Please try again.")
     } finally {
       setSubmittingReview(false)
     }
@@ -182,11 +183,11 @@ export default function BookingsPage() {
           {completedBookings.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
               {completedBookings.map((booking) => (
-                <BookingCard 
-                  key={booking.id} 
-                  booking={booking} 
-                  onReview={() => handleOpenReviewDialog(booking)} 
-                  showReviewButton={true} 
+                <BookingCard
+                  key={booking.id}
+                  booking={booking}
+                  onReview={() => handleOpenReviewDialog(booking)}
+                  showReviewButton={true}
                 />
               ))}
             </div>
@@ -251,7 +252,7 @@ export default function BookingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       {/* Review Dialog */}
       <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
         <DialogContent className="sm:max-w-[500px]">
@@ -261,7 +262,7 @@ export default function BookingsPage() {
               Share your experience at {bookingToReview?.hotelName}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-6 py-4">
             <div>
               <label className="block mb-3 font-medium">Rating</label>
@@ -276,11 +277,10 @@ export default function BookingsPage() {
                     className="focus:outline-none"
                   >
                     <StarIcon
-                      className={`h-8 w-8 ${
-                        (hoverRating || reviewRating) >= star
+                      className={`h-8 w-8 ${(hoverRating || reviewRating) >= star
                           ? "fill-yellow-400 text-yellow-400"
                           : "fill-muted text-muted"
-                      }`}
+                        }`}
                     />
                   </button>
                 ))}
@@ -295,7 +295,7 @@ export default function BookingsPage() {
                 </p>
               )}
             </div>
-            
+
             <div>
               <label htmlFor="comment" className="block mb-2 font-medium">
                 Your Review
@@ -310,7 +310,7 @@ export default function BookingsPage() {
               />
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button
               variant="outline"
@@ -319,8 +319,8 @@ export default function BookingsPage() {
             >
               Cancel
             </Button>
-            <Button 
-              onClick={handleSubmitReview} 
+            <Button
+              onClick={handleSubmitReview}
               disabled={reviewRating === 0 || submittingReview}
             >
               {submittingReview ? (
@@ -345,7 +345,18 @@ function BookingCard({ booking, onCancel, onReview, showCancelButton, showReview
   return (
     <Card className="overflow-hidden">
       <div className="relative h-48">
-        <img src={booking.image || "/placeholder.svg"} alt={booking.hotelName} className="h-full w-full object-cover" />
+        {booking.image ? (
+          <img
+            src={booking.image}
+            alt={booking.hotelName}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full flex-col items-center justify-center bg-slate-100 dark:bg-slate-800">
+            <HotelIcon className="h-12 w-12 text-slate-400 dark:text-slate-500" />
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">No image available</p>
+          </div>
+        )}
         <div className="absolute right-2 top-2">
           <Badge
             className={`
@@ -421,7 +432,7 @@ function BookingCard({ booking, onCancel, onReview, showCancelButton, showReview
 
 function EmptyState({ title, description, actionText, actionLink }) {
   const navigate = useNavigate()
-  
+
   return (
     <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-8 text-center">
       <div className="mb-4 rounded-full bg-muted p-3">

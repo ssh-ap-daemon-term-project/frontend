@@ -4,6 +4,7 @@ import BookingsPage from './components/cust-bookings'
 import ItinerariesPage from './components/itinerary-main'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import CustChat from './components/cust-chat'
+import Reviews from './components/reviews'
 
 export const Metadata = {
     title: " Customer Dashboard",
@@ -23,6 +24,7 @@ const CustomerPage = () => {
             <TabsTrigger value="bookings">Bookings</TabsTrigger>
             <TabsTrigger value="itineraries">Itineraries</TabsTrigger>
             <TabsTrigger value="chat">Chat-box</TabsTrigger>
+            <TabsTrigger value="reviews">Reviews</TabsTrigger>
           </TabsList>
 
           <TabsContent value="hotels" className="space-y-4">
@@ -38,6 +40,10 @@ const CustomerPage = () => {
           </TabsContent>
           <TabsContent value="chat" className="space-y-4">
             <CustChat  />
+          </TabsContent>
+
+          <TabsContent value="reviews" className="space-y-4">
+            <Reviews />
           </TabsContent>
           
         </Tabs>

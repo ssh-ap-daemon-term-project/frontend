@@ -1,10 +1,8 @@
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Dialog,
   DialogContent,
@@ -13,220 +11,150 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { StarIcon, PencilIcon, HotelIcon, GlobeIcon, CarIcon } from "lucide-react"
+import { StarIcon, PencilIcon, HotelIcon, Loader2 } from "lucide-react"
 import { toast } from "react-toastify"
-
-// Mock data for reviews
-const mockReviews = {
-  hotels: [
-    {
-      id: 1,
-      hotelId: 1,
-      hotelName: "Grand Plaza Hotel",
-      city: "New York",
-      rating: 5,
-      comment:
-        "Excellent hotel with amazing service. The staff was very friendly and accommodating. The room was clean and comfortable. Would definitely stay here again!",
-      date: "2023-12-15",
-      image: "/placeholder.svg?height=300&width=500",
-    },
-    {
-      id: 2,
-      hotelId: 3,
-      hotelName: "Mountain View Lodge",
-      city: "Denver",
-      rating: 4,
-      comment:
-        "Great location and beautiful views. The room was spacious and comfortable. The only issue was that the WiFi was a bit slow at times.",
-      date: "2023-10-05",
-      image: "/placeholder.svg?height=300&width=500",
-    },
-  ],
-  drivers: [
-    {
-      id: 3,
-      driverName: "Michael Johnson",
-      rating: 5,
-      comment:
-        "Michael was an excellent driver. Very professional, punctual, and knowledgeable about the area. Made our trip much more enjoyable.",
-      date: "2023-11-20",
-      tripDetails: "New York City Tour",
-    },
-  ],
-  website: [
-    {
-      id: 4,
-      rating: 4,
-      comment:
-        "The website is very user-friendly and makes booking hotels and planning itineraries a breeze. Would love to see more filter options for hotels.",
-      date: "2023-09-10",
-      category: "Usability",
-    },
-  ],
-}
+import { getCustomerReviews, updateReview, deleteReview } from "@/api/customer"
 
 export default function ReviewsPage() {
-  const [reviews, setReviews] = useState(mockReviews)
+  const [reviews, setReviews] = useState([])
+  const [loading, setLoading] = useState(true)
   const [selectedReview, setSelectedReview] = useState(null)
-  const [selectedReviewType, setSelectedReviewType] = useState(null)
   const [editForm, setEditForm] = useState({
     rating: 0,
     comment: "",
   })
+  const [submitting, setSubmitting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deletingReviewId, setDeletingReviewId] = useState(null)
 
-  const handleEditReview = (review, type) => {
+  useEffect(() => {
+    loadReviews()
+  }, [])
+
+  const loadReviews = async () => {
+    try {
+      setLoading(true)
+      const response = await getCustomerReviews()
+      setReviews(response.data)
+    } catch (error) {
+      console.error("Failed to load reviews:", error)
+      toast.error("Failed to load reviews. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleEditReview = (review) => {
     setSelectedReview(review)
-    setSelectedReviewType(type)
     setEditForm({
       rating: review.rating,
       comment: review.comment,
     })
   }
 
-  const handleSaveReview = () => {
-    // In a real app, you would call an API to update the review
-    const updatedReviews = { ...reviews }
+  const handleSaveReview = async () => {
+    if (editForm.rating === 0) {
+      toast.error("Please select a rating")
+      return
+    }
 
-    updatedReviews[selectedReviewType] = updatedReviews[selectedReviewType].map((review) =>
-      review.id === selectedReview.id ? { ...review, rating: editForm.rating, comment: editForm.comment } : review,
-    )
+    try {
+      setSubmitting(true)
+      await updateReview(selectedReview.id, {
+        rating: editForm.rating,
+        comment: editForm.comment
+      })
 
-    setReviews(updatedReviews)
-    setSelectedReview(null)
-    setSelectedReviewType(null)
+      // Update the review in the local state
+      const updatedReviews = reviews.map((review) =>
+        review.id === selectedReview.id
+          ? { ...review, rating: editForm.rating, comment: editForm.comment }
+          : review
+      )
 
-    toast({
-      title: "Review Updated",
-      description: "Your review has been updated successfully.",
-    })
+      setReviews(updatedReviews)
+      setSelectedReview(null)
+
+      toast.success("Your review has been updated successfully.")
+    } catch (error) {
+      toast.error(error.response.data.detail || "Failed to update review. Please try again.")
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  const handleDeleteReview = (reviewId, type) => {
-    // In a real app, you would call an API to delete the review
-    const updatedReviews = { ...reviews }
-    updatedReviews[type] = updatedReviews[type].filter((review) => review.id !== reviewId)
+  const handleDeleteReview = async (reviewId) => {
+    try {
+      setDeletingReviewId(reviewId)
+      setDeleting(true)
+      await deleteReview(reviewId)
 
-    setReviews(updatedReviews)
+      // Remove the review from the local state
+      const updatedReviews = reviews.filter((review) => review.id !== reviewId)
+      setReviews(updatedReviews)
 
-    toast({
-      title: "Review Deleted",
-      description: "Your review has been deleted successfully.",
-    })
+      toast.success("Your review has been deleted successfully.")
+    } catch (error) {
+      toast.error(error.response.data.detail || "Failed to delete review. Please try again.")
+    } finally {
+      setDeleting(false)
+      setDeletingReviewId(null)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-primary" />
+          <p className="mt-2 text-muted-foreground">Loading your reviews...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="mb-6 text-3xl font-bold">My Reviews</h1>
-
-      <Tabs defaultValue="hotels" className="mb-8">
-        <TabsList className="mb-4">
-          <TabsTrigger value="hotels" className="gap-2">
-            <HotelIcon className="h-4 w-4" />
-            Hotels
-          </TabsTrigger>
-          <TabsTrigger value="drivers" className="gap-2">
-            <CarIcon className="h-4 w-4" />
-            Drivers
-          </TabsTrigger>
-          <TabsTrigger value="website" className="gap-2">
-            <GlobeIcon className="h-4 w-4" />
-            Website
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="hotels">
-          {reviews.hotels.length > 0 ? (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {reviews.hotels.map((review) => (
-                <Card key={review.id}>
-                  <div className="grid grid-cols-1 md:grid-cols-3">
-                    <div className="h-full">
-                      <img
-                        src={review.image || "/placeholder.svg"}
-                        alt={review.hotelName}
-                        className="h-full w-full object-cover"
-                      />
+      {reviews.length > 0 ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {reviews.map((review) => (
+            <Card key={review.id}>
+              <div className="grid grid-cols-1 md:grid-cols-3">
+                <div className="h-full">
+                  {review.image ? (
+                    <img
+                      src={review.image}
+                      alt={review.hotelName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full flex-col items-center justify-center bg-slate-100 dark:bg-slate-800">
+                      <HotelIcon className="h-12 w-12 text-slate-400 dark:text-slate-500" />
+                      <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">No image available</p>
                     </div>
-                    <div className="col-span-2 flex flex-col">
-                      <CardHeader className="pb-2">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <h3 className="text-xl font-bold">{review.hotelName}</h3>
-                            <p className="text-sm text-muted-foreground">{review.city}</p>
-                          </div>
-                          <div className="flex">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <StarIcon
-                                key={i}
-                                className={`h-5 w-5 ${
-                                  i < review.rating ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted"
-                                }`}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      </CardHeader>
-
-                      <CardContent className="flex-1 pb-2">
-                        <p className="text-sm text-muted-foreground">
-                          Reviewed on {new Date(review.date).toLocaleDateString()}
-                        </p>
-                        <p className="mt-2">{review.comment}</p>
-                      </CardContent>
-
-                      <CardFooter className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="gap-1"
-                          onClick={() => handleEditReview(review, "hotels")}
-                        >
-                          <PencilIcon className="h-4 w-4" />
-                          Edit
-                        </Button>
-                        <Button variant="destructive" size="sm" onClick={() => handleDeleteReview(review.id, "hotels")}>
-                          Delete
-                        </Button>
-                      </CardFooter>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              icon={<HotelIcon className="h-6 w-6 text-muted-foreground" />}
-              title="No Hotel Reviews Yet"
-              description="You haven't written any hotel reviews yet. After staying at a hotel, you can share your experience."
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="drivers">
-          {reviews.drivers.length > 0 ? (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {reviews.drivers.map((review) => (
-                <Card key={review.id}>
+                  )}
+                </div>
+                <div className="col-span-2 flex flex-col">
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="text-xl font-bold">{review.driverName}</h3>
-                        <p className="text-sm text-muted-foreground">{review.tripDetails}</p>
+                        <h3 className="text-xl font-bold">{review.hotelName}</h3>
+                        <p className="text-sm text-muted-foreground">{review.city}</p>
                       </div>
                       <div className="flex">
                         {Array.from({ length: 5 }).map((_, i) => (
                           <StarIcon
                             key={i}
-                            className={`h-5 w-5 ${
-                              i < review.rating ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted"
-                            }`}
+                            className={`h-5 w-5 ${i < review.rating ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted"
+                              }`}
                           />
                         ))}
                       </div>
                     </div>
                   </CardHeader>
 
-                  <CardContent className="pb-2">
+                  <CardContent className="flex-1 pb-2">
                     <p className="text-sm text-muted-foreground">
                       Reviewed on {new Date(review.date).toLocaleDateString()}
                     </p>
@@ -238,93 +166,46 @@ export default function ReviewsPage() {
                       variant="outline"
                       size="sm"
                       className="gap-1"
-                      onClick={() => handleEditReview(review, "drivers")}
+                      onClick={() => handleEditReview(review)}
                     >
                       <PencilIcon className="h-4 w-4" />
                       Edit
                     </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteReview(review.id, "drivers")}>
-                      Delete
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              icon={<CarIcon className="h-6 w-6 text-muted-foreground" />}
-              title="No Driver Reviews Yet"
-              description="You haven't written any driver reviews yet. After using our driver service, you can share your experience."
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="website">
-          {reviews.website.length > 0 ? (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              {reviews.website.map((review) => (
-                <Card key={review.id}>
-                  <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="text-xl font-bold">Website Feedback</h3>
-                        <p className="text-sm text-muted-foreground">Category: {review.category}</p>
-                      </div>
-                      <div className="flex">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <StarIcon
-                            key={i}
-                            className={`h-5 w-5 ${
-                              i < review.rating ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="pb-2">
-                    <p className="text-sm text-muted-foreground">
-                      Submitted on {new Date(review.date).toLocaleDateString()}
-                    </p>
-                    <p className="mt-2">{review.comment}</p>
-                  </CardContent>
-
-                  <CardFooter className="flex gap-2">
                     <Button
-                      variant="outline"
+                      variant="destructive"
                       size="sm"
-                      className="gap-1"
-                      onClick={() => handleEditReview(review, "website")}
+                      onClick={() => handleDeleteReview(review.id)}
+                      disabled={deletingReviewId === review.id && deleting}
                     >
-                      <PencilIcon className="h-4 w-4" />
-                      Edit
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteReview(review.id, "website")}>
-                      Delete
+                      {deletingReviewId === review.id && deleting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Deleting...
+                        </>
+                      ) : (
+                        "Delete"
+                      )}
                     </Button>
                   </CardFooter>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <EmptyState
-              icon={<GlobeIcon className="h-6 w-6 text-muted-foreground" />}
-              title="No Website Reviews Yet"
-              description="You haven't provided any feedback about our website yet. Your input helps us improve!"
-            />
-          )}
-        </TabsContent>
-      </Tabs>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon={<HotelIcon className="h-6 w-6 text-muted-foreground" />}
+          title="No Hotel Reviews Yet"
+          description="You haven't written any hotel reviews yet. After staying at a hotel, you can share your experience."
+        />
+      )}
 
       <Dialog open={!!selectedReview} onOpenChange={(open) => !open && setSelectedReview(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Review</DialogTitle>
             <DialogDescription>
-              {selectedReviewType === "hotels" && `Update your review for ${selectedReview?.hotelName}`}
-              {selectedReviewType === "drivers" && `Update your review for ${selectedReview?.driverName}`}
-              {selectedReviewType === "website" && "Update your website feedback"}
+              Update your review for {selectedReview?.hotelName}
             </DialogDescription>
           </DialogHeader>
 
@@ -341,9 +222,8 @@ export default function ReviewsPage() {
                       className="p-1"
                     >
                       <StarIcon
-                        className={`h-6 w-6 ${
-                          i < editForm.rating ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted"
-                        }`}
+                        className={`h-6 w-6 ${i < editForm.rating ? "fill-yellow-400 text-yellow-400" : "fill-muted text-muted"
+                          }`}
                       />
                     </button>
                   ))}
@@ -363,10 +243,26 @@ export default function ReviewsPage() {
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSelectedReview(null)}>
+            <Button
+              variant="outline"
+              onClick={() => setSelectedReview(null)}
+              disabled={submitting}
+            >
               Cancel
             </Button>
-            <Button onClick={handleSaveReview}>Save Changes</Button>
+            <Button
+              onClick={handleSaveReview}
+              disabled={editForm.rating === 0 || submitting}
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -383,4 +279,3 @@ function EmptyState({ icon, title, description }) {
     </div>
   )
 }
-

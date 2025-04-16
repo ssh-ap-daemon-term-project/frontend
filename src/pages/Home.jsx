@@ -12,6 +12,8 @@ import { format } from "date-fns"
 import { useState } from "react"
 import { Link } from "react-router-dom"
 
+import styles from './Home.module.css';
+
 const Home = () => {
   return (
     <><div>
@@ -20,7 +22,12 @@ const Home = () => {
         <div className="mx-auto max-w-4xl">
           <h1 className="mb-4 text-4xl font-bold md:text-5xl">Find Your Perfect Stay</h1>
           <p className="mb-8 text-lg md:text-xl">Discover and book the best hotels at the best prices</p>
-          <SearchForm />
+          {/* <SearchForm /> */}
+          <h1 className={`text-5xl text-center font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-purple-500 to-pink-500 drop-shadow-lg tracking-wide ${styles.animateGradientRotate}`}>
+            CruiseAide
+          </h1>
+
+
         </div>
       </section>
 
@@ -28,9 +35,9 @@ const Home = () => {
 
       <div>
 
-      <h4 className="text-4xl md:text-5xl text-center font-normal mt-6">Popular Destinations</h4>
+        <h4 className="text-4xl md:text-5xl text-center font-normal mt-6">Popular Destinations</h4>
 
-      <Carousel_dest></Carousel_dest>
+        <Carousel_dest></Carousel_dest>
       </div>
 
       {/* <section className="mb-12">
@@ -75,7 +82,7 @@ const Home = () => {
       <Footer></Footer>
     </div>
     </>
-    
+
   )
 }
 

@@ -59,12 +59,14 @@ import {
   submitHotelReview,
 } from "../../../api/itineraryApi"
 
-import { bookRoom } from "../../../api/customer"
+import { bookRoom, cancelRoomBooking } from "../../../api/customer"
 
 export default function ItineraryDetailPage() {
   const navigate = useNavigate()
   const { id } = useParams()
   const itineraryId = Number.parseInt(id)
+
+  const [itinerary_status, setItineraryStatus] = useState("upcoming")
 
   // State for itinerary data
   const [itinerary, setItinerary] = useState(null)
@@ -127,6 +129,20 @@ export default function ItineraryDetailPage() {
     cvv: "",
   })
 
+  const handleItineraryStatus = () => {
+    const startDate = new Date(itinerary.startDate)
+    const endDate = new Date(itinerary.endDate)
+    const today = new Date()
+
+    if (today < startDate) {
+      setItineraryStatus("upcoming")
+    } else if (today >= startDate && today <= endDate) {
+      setItineraryStatus("ongoing")
+    } else {
+      setItineraryStatus("completed")
+    }
+  }
+
   const fetchItinerary = async () => {
     try {
       setLoading(true)
@@ -150,6 +166,13 @@ export default function ItineraryDetailPage() {
       fetchItinerary()
     }
   }, [itineraryId])
+
+  // Add a separate useEffect that runs whenever itinerary changes
+  useEffect(() => {
+    if (itinerary) {
+      handleItineraryStatus();
+    }
+  }, [itinerary]);
 
   // Fetch available rooms when adding a room
   const fetchAvailableRooms = async (startDate, endDate, city, guests) => {
@@ -183,7 +206,7 @@ export default function ItineraryDetailPage() {
 
       // Calculate number of nights (not days)
       // End date - start date gives milliseconds, divide by ms in a day
-      const nights = Math.max(1, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)))
+      const nights = Math.max(0, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)))
 
       // Calculate cost for this room
       const roomCost = basePrice * nights
@@ -406,13 +429,6 @@ export default function ItineraryDetailPage() {
     }
   }
 
-  /**
- * Books a room from an itinerary item
- * @param {number} roomItemId - The ID of the room item in the itinerary
- * @param {number} numberOfPersons - Number of persons staying in the room
- * @param {number} customerId - The customer's ID
- * @returns {Promise} - Promise with booking details or error
- */
   async function handleBookRoom(room) {
     try {
       // Extract parameters from the room object and itinerary
@@ -436,6 +452,32 @@ export default function ItineraryDetailPage() {
       toast.error(errorMessage);
       console.error('Error booking room:', error);
       throw error;
+    }
+  }
+
+  async function handleCancelRoom(room) {
+    try {
+      // Get the booking ID from the room object
+      const roomItemId = room.id;
+
+      if (!roomItemId) {
+        toast.error('No booking found for this room');
+        return;
+      }
+
+      // Call the API function to cancel the booking
+      await cancelRoomBooking(roomItemId);
+
+      // Show success message
+      toast.success('Room booking cancelled successfully');
+
+      // Refresh the itinerary to update UI
+      fetchItinerary();
+    } catch (error) {
+      // Handle errors
+      const errorMessage = error.response?.data?.detail || 'Failed to cancel room booking';
+      toast.error(errorMessage);
+      console.error('Error cancelling room booking:', error);
     }
   }
 
@@ -796,13 +838,13 @@ export default function ItineraryDetailPage() {
 
               <Badge
                 className={`
-                  ${itinerary.status === "upcoming" ? "bg-blue-500" : ""}
-                  ${itinerary.status === "ongoing" ? "bg-green-500" : ""}
-                  ${itinerary.status === "completed" ? "bg-gray-500" : ""}
-                  ${itinerary.status === "accepted" ? "bg-purple-500" : ""}
+                  ${itinerary_status === "upcoming" ? "bg-blue-500" : ""}
+                  ${itinerary_status === "ongoing" ? "bg-green-500" : ""}
+                  ${itinerary_status === "completed" ? "bg-gray-500" : ""}
+                  ${itinerary_status === "accepted" ? "bg-purple-500" : ""}
                 `}
               >
-                {itinerary?.status?.charAt(0).toUpperCase() + itinerary?.status?.slice(1)}
+                {itinerary_status?.charAt(0).toUpperCase() + itinerary_status?.slice(1)}
               </Badge>
 
               {itinerary.driverServiceRequested && (
@@ -820,11 +862,6 @@ export default function ItineraryDetailPage() {
                 Accept Itinerary
               </Button>
             )}
-
-            <Button variant="outline" onClick={() => setShowDriverServiceDialog(true)} className="gap-2">
-              <CarIcon className="h-4 w-4" />
-              {itinerary.driverServiceRequested ? "Remove Driver Service" : "Add Driver Service"}
-            </Button>
 
             <Button variant="outline" asChild>
               <Link to={`/itineraries/${itinerary.id}/edit`}>
@@ -1077,9 +1114,14 @@ export default function ItineraryDetailPage() {
                       <Button variant="outline" size="sm" asChild>
                         <Link to={`/hotels/${room.roomId}`}>View Hotel</Link>
                       </Button>
-                      <Button size="sm" onClick={() => handleBookRoom(room)} disabled={room.isPaid}>
-                        Book Room
-                      </Button>
+                      {room.isPaid ?
+                        (<Button size="sm" onClick={() => handleCancelRoom(room)}>
+                          Cancel Room
+                        </Button>)
+                        :
+                        (<Button size="sm" onClick={() => handleBookRoom(room)}>
+                          Book Room
+                        </Button>)}
                     </div>
                   </CardHeader>
                 </Card>

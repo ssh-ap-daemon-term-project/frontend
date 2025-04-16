@@ -1,8 +1,5 @@
-import { Link } from "react-router-dom"
-
-import { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { useParams } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { useNavigate, useParams, Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -20,179 +17,19 @@ import { Calendar } from "@/components/ui/calendar"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
-import { StarIcon, MapPinIcon, CheckIcon, CreditCardIcon, UsersIcon } from "lucide-react"
-import { format, addDays } from "date-fns"
+import { StarIcon, MapPinIcon, CheckIcon, CreditCardIcon, UsersIcon, Loader2, CalendarIcon } from "lucide-react"
+import { format, addDays, parseISO } from "date-fns"
 import { toast } from "react-toastify"
-
-// Mock data for hotel details
-const mockHotelDetails = {
-  id: 1,
-  name: "Grand Plaza Hotel",
-  city: "New York",
-  address: "123 Broadway, New York, NY 10001",
-  description:
-    "Experience luxury in the heart of Manhattan. Our hotel offers spacious rooms with stunning city views, world-class dining, and exceptional service. Located just steps away from major attractions, shopping, and entertainment.",
-  rating: 4.7,
-  images: [
-    "/placeholder.svg?height=500&width=800",
-    "/placeholder.svg?height=500&width=800",
-    "/placeholder.svg?height=500&width=800",
-    "/placeholder.svg?height=500&width=800",
-  ],
-  amenities: [
-    "Free WiFi",
-    "Pool",
-    "Spa",
-    "Gym",
-    "Restaurant",
-    "Room Service",
-    "Business Center",
-    "Concierge",
-    "Laundry Service",
-    "Parking",
-    "Airport Shuttle",
-    "Pet Friendly",
-  ],
-  rooms: [
-    {
-      id: 101,
-      type: "basic",
-      name: "Standard Room",
-      description: "Comfortable room with all essential amenities for a pleasant stay.",
-      capacity: 2,
-      price: Array(60)
-        .fill(0)
-        .map((_, i) => 199 + (i % 7 === 5 || i % 7 === 6 ? 50 : 0)),
-      available: Array(60)
-        .fill(0)
-        .map(() => Math.floor(Math.random() * 10) + 1),
-      booked: Array(60)
-        .fill(0)
-        .map(() => Math.floor(Math.random() * 5)),
-      amenities: ["Free WiFi", "TV", "Air Conditioning", "Private Bathroom", "Coffee Maker"],
-      images: ["/placeholder.svg?height=400&width=600"],
-    },
-    {
-      id: 102,
-      type: "luxury",
-      name: "Deluxe Room",
-      description: "Spacious room with premium amenities and city views.",
-      capacity: 2,
-      price: Array(60)
-        .fill(0)
-        .map((_, i) => 299 + (i % 7 === 5 || i % 7 === 6 ? 75 : 0)),
-      available: Array(60)
-        .fill(0)
-        .map(() => Math.floor(Math.random() * 8) + 1),
-      booked: Array(60)
-        .fill(0)
-        .map(() => Math.floor(Math.random() * 4)),
-      amenities: [
-        "Free WiFi",
-        "TV",
-        "Air Conditioning",
-        "Private Bathroom",
-        "Mini Bar",
-        "City View",
-        "Bathrobe",
-        "Slippers",
-      ],
-      images: ["/placeholder.svg?height=400&width=600"],
-    },
-    {
-      id: 103,
-      type: "suite",
-      name: "Executive Suite",
-      description: "Luxurious suite with separate living area and premium amenities.",
-      capacity: 4,
-      price: Array(60)
-        .fill(0)
-        .map((_, i) => 499 + (i % 7 === 5 || i % 7 === 6 ? 100 : 0)),
-      available: Array(60)
-        .fill(0)
-        .map(() => Math.floor(Math.random() * 5) + 1),
-      booked: Array(60)
-        .fill(0)
-        .map(() => Math.floor(Math.random() * 3)),
-      amenities: [
-        "Free WiFi",
-        "TV",
-        "Air Conditioning",
-        "Private Bathroom",
-        "Mini Bar",
-        "City View",
-        "Living Room",
-        "Dining Area",
-        "Bathrobe",
-        "Slippers",
-        "Espresso Machine",
-      ],
-      images: ["/placeholder.svg?height=400&width=600"],
-    },
-  ],
-  reviews: [
-    {
-      id: 1,
-      customerId: 101,
-      customerName: "John Smith",
-      rating: 5,
-      date: "2023-12-15",
-      comment:
-        "Excellent hotel with amazing service. The staff was very friendly and accommodating. The room was clean and comfortable. Would definitely stay here again!",
-    },
-    {
-      id: 2,
-      customerId: 102,
-      customerName: "Sarah Johnson",
-      rating: 4,
-      date: "2023-11-20",
-      comment:
-        "Great location and beautiful rooms. The only issue was that the WiFi was a bit slow at times. Otherwise, a wonderful stay.",
-    },
-    {
-      id: 3,
-      customerId: 103,
-      customerName: "Michael Brown",
-      rating: 5,
-      date: "2023-10-05",
-      comment:
-        "Perfect stay from start to finish. The room service was prompt and the food was delicious. The spa facilities were top-notch.",
-    },
-    {
-      id: 4,
-      customerId: 104,
-      customerName: "Emily Davis",
-      rating: 3,
-      date: "2023-09-18",
-      comment:
-        "The hotel is beautiful but I found the prices for additional services to be quite high. The room itself was comfortable though.",
-    },
-  ],
-}
-
-// Mock data for user's itineraries
-const mockItineraries = [
-  {
-    id: 1,
-    name: "Summer Vacation",
-    startDate: new Date(2023, 7, 15),
-    endDate: new Date(2023, 7, 25),
-  },
-  {
-    id: 2,
-    name: "Business Trip",
-    startDate: new Date(2023, 8, 10),
-    endDate: new Date(2023, 8, 15),
-  },
-]
+import { getHotelById, bookRoomByRoomId } from "@/api/customer"
 
 export default function HotelDetailPage() {
   const navigate = useNavigate()
   const { hotelId } = useParams()
 
-  // In a real app, you would fetch the hotel data based on the ID
-  const hotel = mockHotelDetails
-
+  // State variables
+  const [loading, setLoading] = useState(true)
+  const [hotel, setHotel] = useState(null)
+  const [itineraries, setItineraries] = useState([])
   const [selectedRoom, setSelectedRoom] = useState(null)
   const [bookingDates, setBookingDates] = useState({
     from: new Date(),
@@ -208,80 +45,226 @@ export default function HotelDetailPage() {
   })
   const [showAddToItineraryDialog, setShowAddToItineraryDialog] = useState(false)
   const [selectedItinerary, setSelectedItinerary] = useState(null)
+  const [processingPayment, setProcessingPayment] = useState(false)
+  const [processingItinerary, setProcessingItinerary] = useState(false)
+
+  // Fetch hotel data
+  useEffect(() => {
+    const fetchHotelData = async () => {
+      try {
+        setLoading(true)
+        const response = await getHotelById(hotelId)
+        setHotel(response.data)
+      } catch (error) {
+        console.error("Failed to fetch hotel:", error)
+        toast.error("Could not load hotel details. Please try again.")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchHotelData()
+  }, [hotelId])
+
+  // Fetch itineraries when needed
+  // const fetchItineraries = async () => {
+  //   try {
+  //     const response = await getCustomerItineraries()
+  //     setItineraries(response.data)
+  //   } catch (error) {
+  //     console.error("Failed to fetch itineraries:", error)
+  //     toast.error("Could not load your itineraries")
+  //     setItineraries([])
+  //   }
+  // }
+
+  const handleRoomBooking = async () => {
+    try {
+      if (!selectedRoom) {
+        toast.error("Please select a room to book.")
+        return
+      }
+  
+      if (!bookingDates || !bookingDates.from || !bookingDates.to) {
+        toast.error("Please select check-in and check-out dates.")
+        return
+      }
+  
+      if (guests <= 0) {
+        toast.error("Please select at least one guest.")
+        return
+      }
+  
+      // Show loading state
+      toast.info("Processing your booking...")
+      
+      // Call the API directly with the correct parameters
+      const response = await bookRoomByRoomId({
+        room_id: selectedRoom.id,
+        start_date: bookingDates.from.toISOString(),
+        end_date: bookingDates.to.toISOString(),
+        number_of_persons: guests
+      })
+      
+      // Handle successful booking
+      toast.success("Room booked successfully!")
+      
+      // Close the booking dialog
+      setSelectedRoom(null)
+      
+      // Optionally redirect to bookings page
+      // navigate("/customer/bookings")
+    } catch (error) {
+      console.error("Booking error:", error)
+      toast.error(error?.response?.data?.detail || "An error occurred while booking the room.")
+    }
+  }
 
   const handleBookNow = (room) => {
     setSelectedRoom(room)
+    // Reset guests to room roomCapacity if current selection is too high
+    if (guests > room.roomCapacity) {
+      setGuests(room.roomCapacity)
+    }
   }
 
   const handleConfirmBooking = () => {
     setShowPaymentDialog(true)
   }
 
-  const handlePayment = (e) => {
+  const handlePayment = async (e) => {
     e.preventDefault()
-    // In a real app, you would process the payment here
 
-    // Show success message
-    toast({
-      title: "Booking Confirmed!",
-      description: `Your booking at ${hotel.name} has been confirmed for ${format(bookingDates.from, "MMM d, yyyy")} to ${format(bookingDates.to, "MMM d, yyyy")}.`,
-    })
-
-    // Close dialog and reset form
-    setShowPaymentDialog(false)
-    setSelectedRoom(null)
-
-    // Redirect to bookings page
-    // In a real app, you would redirect to a booking confirmation page
-    setTimeout(() => {
-      navigate("/customer/bookings")
-    }, 2000)
-  }
-
-  const handleAddToItinerary = (room) => {
-    setSelectedRoom(room)
-    setShowAddToItineraryDialog(true)
-  }
-
-  const confirmAddToItinerary = () => {
-    if (!selectedItinerary) {
-      toast({
-        title: "Error",
-        description: "Please select an itinerary.",
-        variant: "destructive",
-      })
+    if (!selectedRoom || !bookingDates.from || !bookingDates.to) {
+      toast.error("Please select dates for your booking")
       return
     }
 
-    // In a real app, you would call an API to add the room to the itinerary
+    try {
+      setProcessingPayment(true)
 
-    toast({
-      title: "Added to Itinerary",
-      description: `${selectedRoom.name} at ${hotel.name} has been added to your "${selectedItinerary.name}" itinerary.`,
-    })
+      // Prepare booking data
+      const bookingData = {
+        roomId: selectedRoom.id,
+        startDate: bookingDates.from.toISOString(),
+        endDate: bookingDates.to.toISOString(),
+        numberOfPersons: guests
+      }
 
-    setShowAddToItineraryDialog(false)
-    setSelectedItinerary(null)
-    setSelectedRoom(null)
+      // Call API to book the room
+      await customerBookRoom(bookingData)
+
+      // Show success toast
+      toast.success(`Your booking at ${hotel.name} has been confirmed!`)
+
+      // Close dialogs and reset form
+      setShowPaymentDialog(false)
+      setSelectedRoom(null)
+
+      // Redirect to bookings page
+      setTimeout(() => {
+        navigate("/customer/bookings")
+      }, 2000)
+
+    } catch (error) {
+      console.error("Booking failed:", error)
+      toast.error(error.response?.data?.detail || "Failed to process your booking")
+    } finally {
+      setProcessingPayment(false)
+    }
   }
 
+  // const handleAddToItinerary = async (room) => {
+  //   setSelectedRoom(room)
+  //   await fetchItineraries()
+  //   setShowAddToItineraryDialog(true)
+  // }
+
+  // const confirmAddToItinerary = async () => {
+  //   if (!selectedItinerary) {
+  //     toast.error("Please select an itinerary")
+  //     return
+  //   }
+
+  //   if (!selectedRoom || !bookingDates.from || !bookingDates.to) {
+  //     toast.error("Please select dates")
+  //     return
+  //   }
+
+  //   try {
+  //     setProcessingItinerary(true)
+
+  //     // Prepare data
+  //     const data = {
+  //       roomId: selectedRoom.id,
+  //       itineraryId: selectedItinerary.id,
+  //       startDate: bookingDates.from.toISOString(),
+  //       endDate: bookingDates.to.toISOString()
+  //     }
+
+  //     // Call API to add room to itinerary
+  //     await addRoomToItinerary(data)
+
+  //     // Show success toast
+  //     toast.success(`${selectedRoom.name} at ${hotel.name} has been added to your itinerary`)
+
+  //     // Close dialog and reset
+  //     setShowAddToItineraryDialog(false)
+  //     setSelectedItinerary(null)
+  //     setSelectedRoom(null)
+
+  //   } catch (error) {
+  //     console.error("Failed to add to itinerary:", error)
+  //     toast.error(error.response?.data?.detail || "Failed to add to itinerary")
+  //   } finally {
+  //     setProcessingItinerary(false)
+  //   }
+  // }
+
   const calculateTotalPrice = () => {
-    if (!selectedRoom) return 0
+    if (!selectedRoom || !bookingDates || !bookingDates.from || !bookingDates.to) return 0
 
     const startDate = bookingDates.from
     const endDate = bookingDates.to
     const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24))
 
-    let total = 0
-    for (let i = 0; i < days; i++) {
-      const dayIndex = Math.min(i, selectedRoom.price.length - 1)
-      total += selectedRoom.price[dayIndex]
-    }
+    let total = selectedRoom.basePrice * days
+    // for (let i = 0; i < days; i++) {
+    //   const dayIndex = Math.min(i, selectedRoom.basePrice)
+    //   total += selectedRoom.basePrice
+    // }
 
     return total
   }
 
-  const averageRating = hotel.reviews.reduce((acc, review) => acc + review.rating, 0) / hotel.reviews.length
+  if (loading) {
+    return (
+      <div className="container mx-auto flex items-center justify-center py-20">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-10 w-10 animate-spin text-primary" />
+          <p className="mt-4 text-lg">Loading hotel details...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!hotel) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
+          <h2 className="text-xl font-bold text-red-700">Hotel Not Found</h2>
+          <p className="mt-2">The hotel you're looking for doesn't exist or you don't have access to it.</p>
+          <Button className="mt-4" asChild>
+            <Link to="/hotels">Back to Hotels</Link>
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  const averageRating = hotel.reviews.length > 0
+    ? hotel.reviews.reduce((acc, review) => acc + Number(review.rating), 0) / hotel.reviews.length
+    : 0
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -302,7 +285,7 @@ export default function HotelDetailPage() {
 
       <Carousel className="mb-8">
         <CarouselContent>
-          {hotel.images.map((image, index) => (
+          {hotel?.images?.map((image, index) => (
             <CarouselItem key={index}>
               <div className="h-[400px] overflow-hidden rounded-xl">
                 <img
@@ -327,12 +310,12 @@ export default function HotelDetailPage() {
 
         <TabsContent value="rooms">
           <div className="space-y-6">
-            {hotel.rooms.map((room) => (
+            {hotel?.rooms?.map((room) => (
               <Card key={room.id} className="overflow-hidden">
                 <div className="grid grid-cols-1 md:grid-cols-3">
                   <div className="h-48 md:h-full">
                     <img
-                      src={room.images[0] || "/placeholder.svg"}
+                      src={room.images ? room.images[0] : "/placeholder.svg"}
                       alt={room.name}
                       className="h-full w-full object-cover"
                     />
@@ -344,7 +327,7 @@ export default function HotelDetailPage() {
                         <p className="text-muted-foreground">{room.description}</p>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold">${room.price[0]}</div>
+                        <div className="text-2xl font-bold">${room.basePrice}</div>
                         <div className="text-sm text-muted-foreground">per night</div>
                       </div>
                     </div>
@@ -352,21 +335,16 @@ export default function HotelDetailPage() {
                     <div className="mb-4">
                       <div className="mb-2 flex items-center gap-2">
                         <UsersIcon className="h-4 w-4" />
-                        <span>Max {room.capacity} guests</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {room.amenities.map((amenity) => (
-                          <Badge key={amenity} variant="outline">
-                            {amenity}
-                          </Badge>
-                        ))}
+                        <span>Max {room.roomCapacity} guests</span>
                       </div>
                     </div>
 
                     <div className="flex justify-between">
-                      <div className="text-sm text-muted-foreground">{room.available[0]} rooms available</div>
+                      <div className="text-sm">
+                        <AvailabilityCalendar room={room} />
+                      </div>
                       <div className="flex gap-2">
-                        <Button variant="outline" onClick={() => handleAddToItinerary(room)}>
+                        <Button variant="outline" onClick={() => navigate(`/customer`)}>
                           Add to Itinerary
                         </Button>
                         <Button onClick={() => handleBookNow(room)}>Book Now</Button>
@@ -384,16 +362,6 @@ export default function HotelDetailPage() {
             <div className="md:col-span-2">
               <h3 className="mb-4 text-xl font-bold">About This Hotel</h3>
               <p className="mb-6 text-muted-foreground">{hotel.description}</p>
-
-              <h3 className="mb-4 text-xl font-bold">Amenities</h3>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                {hotel.amenities.map((amenity) => (
-                  <div key={amenity} className="flex items-center gap-2">
-                    <CheckIcon className="h-4 w-4 text-green-500" />
-                    <span>{amenity}</span>
-                  </div>
-                ))}
-              </div>
             </div>
 
             <div>
@@ -402,11 +370,19 @@ export default function HotelDetailPage() {
                   <h3 className="mb-4 text-xl font-bold">Location</h3>
                   <div className="mb-4 aspect-video overflow-hidden rounded-md bg-muted">
                     {/* Map placeholder */}
-                    <div className="flex h-full items-center justify-center">
+                    <div className="flex h-full items-center justify-center hover:cursor-pointer" onClick={() => window.open(`https://maps.google.com/?q=${hotel?.latitude},${hotel?.longitude}`, '_blank')}>
                       <MapPinIcon className="h-8 w-8 text-muted-foreground" />
                     </div>
                   </div>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto"
+                    onClick={() => window.open(`https://maps.google.com/?q=${hotel?.latitude},${hotel?.longitude}`, '_blank')}
+                  >
+                    View on Google Maps
+                  </Button>
                   <p className="text-muted-foreground">{hotel.address}</p>
+                  <p className="text-muted-foreground">{hotel.city}</p>
                 </CardContent>
               </Card>
             </div>
@@ -418,21 +394,25 @@ export default function HotelDetailPage() {
             <div className="md:col-span-2">
               <h3 className="mb-4 text-xl font-bold">Guest Reviews</h3>
 
-              <div className="space-y-6">
-                {hotel.reviews.map((review) => (
-                  <div key={review.id} className="rounded-lg border p-4">
-                    <div className="mb-2 flex items-center justify-between">
-                      <div className="font-semibold">{review.customerName}</div>
-                      <div className="flex items-center gap-1">
-                        <StarIcon className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span>{review.rating}</span>
+              {hotel.reviews.length > 0 ? (
+                <div className="space-y-6">
+                  {hotel.reviews.map((review) => (
+                    <div key={review.id} className="rounded-lg border p-4">
+                      <div className="mb-2 flex items-center justify-between">
+                        <div className="font-semibold">{review.customerName}</div>
+                        <div className="flex items-center gap-1">
+                          <StarIcon className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <span>{review.rating}</span>
+                        </div>
                       </div>
+                      <div className="mb-2 text-sm text-muted-foreground">{review.date}</div>
+                      <p>{review.comment}</p>
                     </div>
-                    <div className="mb-2 text-sm text-muted-foreground">{review.date}</div>
-                    <p>{review.comment}</p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No reviews yet for this hotel.</p>
+              )}
 
               <Button className="mt-6" variant="outline">
                 Write a Review
@@ -444,43 +424,48 @@ export default function HotelDetailPage() {
                 <CardContent className="p-6">
                   <h3 className="mb-4 text-xl font-bold">Rating Summary</h3>
 
-                  <div className="mb-4 flex items-center gap-2">
-                    <div className="text-4xl font-bold">{averageRating.toFixed(1)}</div>
-                    <div>
-                      <div className="flex">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <StarIcon
-                            key={i}
-                            className={`h-5 w-5 ${
-                              i < Math.floor(averageRating)
-                                ? "fill-yellow-400 text-yellow-400"
-                                : i < averageRating
-                                  ? "fill-yellow-400/50 text-yellow-400"
-                                  : "fill-muted text-muted"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Based on {hotel.reviews.length} reviews</div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    {[5, 4, 3, 2, 1].map((rating) => {
-                      const count = hotel.reviews.filter((r) => r.rating === rating).length
-                      const percentage = (count / hotel.reviews.length) * 100
-
-                      return (
-                        <div key={rating} className="flex items-center gap-2">
-                          <div className="w-8 text-sm">{rating} stars</div>
-                          <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                            <div className="h-full bg-yellow-400" style={{ width: `${percentage}%` }}></div>
+                  {hotel.reviews.length > 0 ? (
+                    <>
+                      <div className="mb-4 flex items-center gap-2">
+                        <div className="text-4xl font-bold">{averageRating.toFixed(1)}</div>
+                        <div>
+                          <div className="flex">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <StarIcon
+                                key={i}
+                                className={`h-5 w-5 ${i < Math.floor(averageRating)
+                                  ? "fill-yellow-400 text-yellow-400"
+                                  : i < averageRating
+                                    ? "fill-yellow-400/50 text-yellow-400"
+                                    : "fill-muted text-muted"
+                                  }`}
+                              />
+                            ))}
                           </div>
-                          <div className="w-8 text-right text-sm">{count}</div>
+                          <div className="text-sm text-muted-foreground">Based on {hotel.reviews.length} reviews</div>
                         </div>
-                      )
-                    })}
-                  </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        {[5, 4, 3, 2, 1].map((rating) => {
+                          const count = hotel.reviews.filter((r) => Number(r.rating) === rating).length
+                          const percentage = (count / hotel.reviews.length) * 100
+
+                          return (
+                            <div key={rating} className="flex items-center gap-2">
+                              <div className="w-8 text-sm">{rating} stars</div>
+                              <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                                <div className="h-full bg-yellow-400" style={{ width: `${percentage}%` }}></div>
+                              </div>
+                              <div className="w-8 text-right text-sm">{count}</div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-muted-foreground">No ratings yet</p>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -490,10 +475,10 @@ export default function HotelDetailPage() {
 
       {selectedRoom && !showAddToItineraryDialog && (
         <Dialog open={true} onOpenChange={(open) => !open && setSelectedRoom(null)}>
-          <DialogContent className="sm:max-w-[600px]">
+          <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Book {selectedRoom.name}</DialogTitle>
-              <DialogDescription>Select your dates and number of guests</DialogDescription>
+              <DialogDescription>Select your check-in and check-out dates and number of guests</DialogDescription>
             </DialogHeader>
 
             <div className="grid gap-6 py-4">
@@ -510,7 +495,7 @@ export default function HotelDetailPage() {
                       return (
                         dayIndex < 0 ||
                         dayIndex >= 60 ||
-                        selectedRoom.available[dayIndex] <= selectedRoom.booked[dayIndex]
+                        selectedRoom.availableRoomsList[dayIndex <= 0 ? 0 : Math.min(dayIndex, 59)] <= 0
                       )
                     }}
                   />
@@ -523,37 +508,45 @@ export default function HotelDetailPage() {
                   id="guests"
                   type="number"
                   min={1}
-                  max={selectedRoom.capacity}
+                  max={selectedRoom.roomCapacity}
                   value={guests}
                   onChange={(e) => setGuests(Number.parseInt(e.target.value))}
                 />
-                <p className="text-sm text-muted-foreground">Maximum {selectedRoom.capacity} guests per room</p>
+                <p className="text-sm text-muted-foreground">Maximum {selectedRoom.roomCapacity} guests per room</p>
               </div>
 
               <Separator />
 
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Room price</span>
-                  <span>${calculateTotalPrice()}</span>
+              {bookingDates?.from && bookingDates?.to ? (
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Room price</span>
+                    <span>${calculateTotalPrice()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Taxes & fees</span>
+                    <span>${Math.round(calculateTotalPrice() * 0.12)}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between font-bold">
+                    <span>Total</span>
+                    <span>${calculateTotalPrice() + Math.round(calculateTotalPrice() * 0.12)}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between">
-                  <span>Taxes & fees</span>
-                  <span>${Math.round(calculateTotalPrice() * 0.12)}</span>
+              ) : (
+                <div className="rounded-md bg-muted p-4 text-center">
+                  <p className="text-sm font-medium">Please select check-in and check-out dates to see pricing</p>
                 </div>
-                <Separator />
-                <div className="flex justify-between font-bold">
-                  <span>Total</span>
-                  <span>${calculateTotalPrice() + Math.round(calculateTotalPrice() * 0.12)}</span>
-                </div>
-              </div>
+              )}
             </div>
 
             <DialogFooter>
               <Button variant="outline" onClick={() => setSelectedRoom(null)}>
                 Cancel
               </Button>
-              <Button onClick={handleConfirmBooking}>Continue to Payment</Button>
+              <Button onClick={handleRoomBooking} disabled={!bookingDates || !bookingDates?.from || !bookingDates?.to}>
+                Book
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -623,7 +616,7 @@ export default function HotelDetailPage() {
                   {selectedRoom?.name} at {hotel.name}
                 </p>
                 <p className="text-muted-foreground">
-                  {bookingDates.from && bookingDates.to
+                  {bookingDates?.from && bookingDates?.to
                     ? `${format(bookingDates.from, "MMM d, yyyy")} - ${format(bookingDates.to, "MMM d, yyyy")}`
                     : "Select dates"}
                 </p>
@@ -637,16 +630,25 @@ export default function HotelDetailPage() {
             </div>
 
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>
+              <Button variant="outline" onClick={() => setShowPaymentDialog(false)} disabled={processingPayment}>
                 Cancel
               </Button>
-              <Button type="submit">Complete Booking</Button>
+              <Button type="submit" disabled={processingPayment}>
+                {processingPayment ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Complete Booking"
+                )}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showAddToItineraryDialog} onOpenChange={setShowAddToItineraryDialog}>
+      {/* <Dialog open={showAddToItineraryDialog} onOpenChange={setShowAddToItineraryDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add to Itinerary</DialogTitle>
@@ -654,9 +656,9 @@ export default function HotelDetailPage() {
           </DialogHeader>
 
           <div className="py-4">
-            {mockItineraries.length > 0 ? (
+            {itineraries.length > 0 ? (
               <div className="space-y-4">
-                {mockItineraries.map((itinerary) => (
+                {itineraries.map((itinerary) => (
                   <div
                     key={itinerary.id}
                     className={`cursor-pointer rounded-lg border p-4 transition-colors hover:bg-muted ${
@@ -665,9 +667,11 @@ export default function HotelDetailPage() {
                     onClick={() => setSelectedItinerary(itinerary)}
                   >
                     <h3 className="font-medium">{itinerary.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {format(itinerary.startDate, "MMM d")} - {format(itinerary.endDate, "MMM d, yyyy")}
-                    </p>
+                    {itinerary.startDate && itinerary.endDate && (
+                      <p className="text-sm text-muted-foreground">
+                        {format(new Date(itinerary.startDate), "MMM d")} - {format(new Date(itinerary.endDate), "MMM d, yyyy")}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>
@@ -675,7 +679,7 @@ export default function HotelDetailPage() {
               <div className="text-center">
                 <p className="mb-4">You don't have any itineraries yet.</p>
                 <Button asChild>
-                  <Link href="/itineraries">Create an Itinerary</Link>
+                  <Link to="/itineraries/new">Create an Itinerary</Link>
                 </Button>
               </div>
             )}
@@ -688,16 +692,129 @@ export default function HotelDetailPage() {
                 setShowAddToItineraryDialog(false)
                 setSelectedRoom(null)
               }}
+              disabled={processingItinerary}
             >
               Cancel
             </Button>
-            <Button onClick={confirmAddToItinerary} disabled={!selectedItinerary}>
-              Add to Itinerary
+            <Button onClick={confirmAddToItinerary} disabled={!selectedItinerary || processingItinerary}>
+              {processingItinerary ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                "Add to Itinerary"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog> */}
     </div>
   )
 }
 
+function AvailabilityCalendar({ room }) {
+  const [isOpen, setIsOpen] = useState(false)
+  const startDate = new Date()
+
+  // Generate dates for the next 60 days for display
+  const dates = Array.from({ length: 60 }, (_, i) => addDays(startDate, i))
+
+  return (
+    <>
+      <Button
+        variant="ghost"
+        className="h-auto p-0 text-sm text-muted-foreground hover:bg-transparent hover:underline"
+        onClick={() => setIsOpen(true)}
+      >
+        <CalendarIcon className="mr-1 h-3 w-3" />
+        {room.availableRoomsList == null ? "0" : room.availableRoomsList[0]} rooms available today
+      </Button>
+
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Room Availability - {room.name}</DialogTitle>
+          </DialogHeader>
+
+          <div className="py-4">
+            <div className="mb-4 grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <p className="font-medium">Legend:</p>
+                <div className="flex items-center gap-2">
+                  <span className="inline-block h-4 w-4 rounded bg-green-500"></span>
+                  <span>Available (5+ rooms)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-block h-4 w-4 rounded bg-yellow-500"></span>
+                  <span>Limited (2-4 rooms)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-block h-4 w-4 rounded bg-red-500"></span>
+                  <span>Almost full (1 room)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-block h-4 w-4 rounded bg-gray-300"></span>
+                  <span>Sold out (0 rooms)</span>
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-2 font-medium">Current selection:</p>
+                <p>{room.name}</p>
+                <p>Base price: ${room.basePrice}/night</p>
+                <p>Maximum capacity: {room.roomCapacity} guests</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-7 gap-1">
+              {/* Day headers */}
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} className="text-center font-medium">
+                  {day}
+                </div>
+              ))}
+
+              {/* First row offset for correct day alignment */}
+              {Array.from({ length: dates[0].getDay() }, (_, i) => (
+                <div key={`empty-${i}`} className="h-[70px]"></div>
+              ))}
+
+              {/* Calendar days */}
+              {dates.map((date, i) => {
+                const available = room.availableRoomsList?.[i] || 0;
+                let bgColor = "bg-gray-300"; // Sold out
+
+                if (available > 4) bgColor = "bg-green-500";
+                else if (available > 1) bgColor = "bg-yellow-500";
+                else if (available === 1) bgColor = "bg-red-500";
+
+                return (
+                  <div
+                    key={date.toString()}
+                    className="flex h-[70px] flex-col rounded border p-1"
+                  >
+                    <div className="text-xs">{format(date, 'MMM d')}</div>
+                    <div className={`mt-1 flex flex-1 flex-col items-center justify-center rounded ${bgColor}`}>
+                      <span className="font-bold text-white">{available}</span>
+                      <span className="text-xs text-white">
+                        {available === 1 ? 'room' : 'rooms'}
+                      </span>
+                    </div>
+                    {room.price && (
+                      <div className="mt-1 text-xs font-medium">${room.price[i]}</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="mt-4 flex justify-end">
+            <Button onClick={() => setIsOpen(false)}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

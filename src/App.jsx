@@ -21,6 +21,7 @@ import EditItineraryPage from './pages/customer/components/itinerary-edit';
 import CustomerProfile from './pages/customer/components/cust-profile';
 import CustomerDashboard from './pages/customer/customer-page';
 import DriverDashboard from './pages/driver/driver-page';
+import ItineraryEditPage from './pages/customer/components/itinerary-edit'
 import AdminChat from './pages/admin/components/admin-chat';
 import DriverProfile from './pages/driver/components/driver-profile';
 import AdminProfile from './pages/admin/components/admin-profile';
@@ -41,6 +42,8 @@ function App() {
         <Route path="/driver/profile" element={<DriverProfile />} />
         <Route path="/customer/profile" element={<CustomerProfile />} />
         <Route path="/itineraries/:id" element={<ItineraryDetailPage />} />
+        <Route path="/itineraries/:id/edit" element={<EditItineraryPage />} />
+        <Route path="/customer/hotels/:hotelId" element={<HotelDetailPage />} />
       </Routes>
 
       <ToastContainer />

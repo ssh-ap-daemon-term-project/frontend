@@ -1103,22 +1103,11 @@ export default function ItineraryDetailPage() {
           <div className="mb-4 flex justify-between">
             <h2 className="text-xl font-bold">Transportation</h2>
             <Button
-              variant="destructive"
-              onClick={() => {
-                // Find the first ride that can be cancelled (not completed)
-                const cancelableRide = itinerary.rideBookings.find(
-                  ride => ride.status !== "completed" && ride.status !== "cancelled"
-                );
-                if (cancelableRide) {
-                  handleCancelRide(cancelableRide.id);
-                } else {
-                  toast.info("No active rides to cancel");
-                }
-              }}
+              onClick={() => setShowAddRideDialog(true)}
               className="gap-2"
             >
-              <TrashIcon className="h-4 w-4" />
-              Cancel Ride
+              <PlusIcon className="h-4 w-4" />
+              Book More Rides
             </Button>
           </div>
 
@@ -1130,10 +1119,11 @@ export default function ItineraryDetailPage() {
                     <div className="flex flex-col justify-between gap-4 md:flex-row">
                       <div>
                         <div className="mb-2 flex items-center gap-2">
-                          <Badge variant={ride.status === "confirmed" ? "default" : "destructive"}>
+                          <Badge variant={ride.status === "confirmed" ? "default" : 
+                                  ride.status === "pending" ? "secondary" :
+                                  ride.status === "completed" ? "outline" : "destructive"}>
                             {ride.status.charAt(0).toUpperCase() + ride.status.slice(1)}
                           </Badge>
-
                         </div>
 
                         <h4 className="font-medium">{format(new Date(ride.pickupDateTime), "MMM d, yyyy h:mm a")}</h4>
@@ -1165,7 +1155,7 @@ export default function ItineraryDetailPage() {
 
                       <div className="flex flex-col items-end justify-between">
                         <div className="flex gap-1">
-                          {ride.status === "confirmed" && (
+                          {(ride.status === "confirmed" || ride.status === "pending") && (
                             <>
                               <Button variant="ghost" size="icon" onClick={() => handleEditRide(ride)}>
                                 <PencilIcon className="h-4 w-4" />

@@ -1,65 +1,108 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useContext } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { MapPin, Clock, DollarSign, Check, X } from "lucide-react"
+import { MapPin, Clock, Check, X, Loader2 } from "lucide-react"
 import { format } from "date-fns"
-
-// Sample pending requests data
-const pendingRequestsData = [
-  {
-    id: "r-123456",
-    passengerName: "Michael Johnson",
-    passengerAvatar: "/placeholder.svg?height=40&width=40",
-    pickupLocation: "123 Main St, Downtown",
-    dropoffLocation: "456 Park Ave, Uptown",
-    pickupTime: "2023-12-05T14:30:00",
-    distance: 5.2,
-    duration: 18,
-    estimatedFare: 15.75,
-    passengerRating: 4.7,
-  },
-  {
-    id: "r-234567",
-    passengerName: "Jessica Smith",
-    passengerAvatar: "/placeholder.svg?height=40&width=40",
-    pickupLocation: "789 Broadway, Midtown",
-    dropoffLocation: "101 River Rd, Eastside",
-    pickupTime: "2023-12-05T16:15:00",
-    distance: 3.8,
-    duration: 12,
-    estimatedFare: 12.5,
-    passengerRating: 4.9,
-  },
-  {
-    id: "r-345678",
-    passengerName: "Robert Davis",
-    passengerAvatar: "/placeholder.svg?height=40&width=40",
-    pickupLocation: "222 Oak St, Westside",
-    dropoffLocation: "333 Pine Ave, Northside",
-    pickupTime: "2023-12-06T09:45:00",
-    distance: 7.5,
-    duration: 25,
-    estimatedFare: 22.3,
-    passengerRating: 4.5,
-  }
-]
+import { getPendingRequests, acceptRide, declineRide } from "@/api/driver.jsx" // Ensure this is correctly implemented
+import { toast } from "react-toastify"
+import { AuthContext } from "@/context/AuthContext"
 
 export function PendingRequests() {
-  const [requests, setRequests] = useState(pendingRequestsData)
+  const [requests, setRequests] = useState([])
+  const [loading, setLoading] = useState(true)
+  const { userId } = useContext(AuthContext)
 
-  const handleAccept = (requestId) => {
-    // In a real app, this would send an API request to accept the ride
-    setRequests(requests.filter(request => request.id !== requestId))
-    // Then probably navigate to a "current ride" screen or similar
+  useEffect(() => {
+    const fetchPending = async () => {
+      try {
+        setLoading(true)
+        const res = await getPendingRequests()
+        console.log("Fetched data:", res)
+
+        // Ensure res.data is available and is an array
+        if (res && Array.isArray(res.data)) {
+          setRequests(res.data)
+        } else {
+          toast.error("Response data is not an array or is missing", res?.data || "No data")
+          setRequests([]) // fallback to empty list
+        }
+      } catch (err) {
+        // Make sure to log the error message for better debugging
+        toast.error("Failed to fetch pending requests: " + (err.message || err))
+        setRequests([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (userId) {
+      fetchPending()
+    }
+  }, [userId])
+
+  const handleAccept = async (requestId) => {
+    try {
+      const numericId = parseInt(requestId.replace("r-", ""), 10)
+      
+      // Show loading toast
+      const toastId = toast.loading("Accepting ride request...")
+      
+      // Use the userId from AuthContext
+      const response = await acceptRide(numericId, userId)
+      
+      // Update the success toast
+      toast.update(toastId, { 
+        render: "Ride accepted successfully!",
+        type: "success",
+        isLoading: false,
+        autoClose: 2000
+      })
+      
+      // Remove from pending list after success
+      setRequests(prevRequests => prevRequests.filter(request => request.id !== requestId))
+      
+    } catch (err) {
+      // Detailed error message to help with debugging
+      console.error("Error accepting ride:", err)
+      
+      // User-friendly error message
+      const errorMessage = err.response?.data?.detail || "Failed to accept ride"
+      toast.error(errorMessage)
+    }
   }
 
-  const handleDecline = (requestId) => {
-    // In a real app, this would send an API request to decline the ride
-    setRequests(requests.filter(request => request.id !== requestId))
+  const handleDecline = async (requestId) => {
+    try {
+      const numericId = parseInt(requestId.replace("r-", ""), 10)
+      
+      // Show loading toast
+      const toastId = toast.loading("Declining ride request...")
+      
+      // Use the userId from AuthContext
+      await declineRide(numericId, userId)
+      
+      // Update the success toast
+      toast.update(toastId, { 
+        render: "Ride declined",
+        type: "info",
+        isLoading: false,
+        autoClose: 2000
+      })
+      
+      // Remove from pending list after success
+      setRequests(prevRequests => prevRequests.filter(request => request.id !== requestId))
+      
+    } catch (err) {
+      // Detailed error message to help with debugging
+      console.error("Error declining ride:", err)
+      
+      // User-friendly error message
+      const errorMessage = err.response?.data?.detail || "Failed to decline ride"
+      toast.error(errorMessage)
+    }
   }
 
   return (
@@ -70,7 +113,12 @@ export function PendingRequests() {
           <CardDescription>Accept or decline incoming ride requests</CardDescription>
         </CardHeader>
         <CardContent>
-          {requests.length === 0 ? (
+          {loading ? (
+            <div className="py-12 text-center">
+              <Loader2 className="mx-auto h-8 w-8 animate-spin text-muted-foreground" />
+              <p className="mt-2 text-sm text-muted-foreground">Loading ride requests...</p>
+            </div>
+          ) : requests.length === 0 ? (
             <div className="py-24 text-center">
               <Clock className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
               <h3 className="mt-4 text-lg font-semibold">No pending requests</h3>

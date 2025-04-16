@@ -92,3 +92,7 @@ export const getDriverRideBookings = async (driverId) => {
 export const getAllRoomBookings = async () => {
     return await API.get('/admin/bookings/rooms');
 };
+
+export const getAdminProfile = async () => {
+    return await API.get('/admin/profile');
+}

@@ -81,7 +81,6 @@ const roomsData = [
     total_no: 20,
     type: "Basic",
     room_capacity: 2,
-    no_booked: Array(60).fill().map((_, i) => i < 10 ? 5 : (i < 20 ? 8 : 3)),
     no_available: Array(60).fill().map((_, i) => i < 10 ? 15 : (i < 20 ? 12 : 17)),
     price: Array(60).fill().map((_, i) => i < 15 ? 100 : (i < 30 ? 120 : 90)),
     hotelfk: 1,
@@ -91,7 +90,6 @@ const roomsData = [
     total_no: 15,
     type: "Luxury",
     room_capacity: 3,
-    no_booked: Array(60).fill().map((_, i) => i < 10 ? 8 : (i < 20 ? 10 : 5)),
     no_available: Array(60).fill().map((_, i) => i < 10 ? 7 : (i < 20 ? 5 : 10)),
     price: Array(60).fill().map((_, i) => i < 15 ? 200 : (i < 30 ? 250 : 180)),
     hotelfk: 1,
@@ -101,7 +99,6 @@ const roomsData = [
     total_no: 10,
     type: "Suite",
     room_capacity: 4,
-    no_booked: Array(60).fill().map((_, i) => i < 10 ? 3 : (i < 20 ? 5 : 2)),
     no_available: Array(60).fill().map((_, i) => i < 10 ? 7 : (i < 20 ? 5 : 8)),
     price: Array(60).fill().map((_, i) => i < 15 ? 300 : (i < 30 ? 350 : 280)),
     hotelfk: 1,
@@ -183,7 +180,7 @@ export default function RoomManagement() {
         type: data.type,
         roomCapacity: data.room_capacity,
         basePrice: data.base_price,
-        hotelId: 1, // Replace with actual hotel ID if needed
+        hotelId: userId
       });
 
       console.log("Add room response:", response);
@@ -198,9 +195,8 @@ export default function RoomManagement() {
           total_no: totalRooms,
           type: data.type,
           room_capacity: parseInt(data.room_capacity),
-          no_booked: Array(60).fill(0),
           no_available: Array(60).fill(totalRooms),
-          price: Array(60).fill(basePrice),
+          price: basePrice,
           hotelfk: 1, // Replace with actual hotel ID if needed
         };
 
@@ -244,13 +240,6 @@ export default function RoomManagement() {
           if (room.id === selectedRoom.id) {
             // Update the total room count
             const updatedRoom = { ...room, total_no: newTotal }
-
-            // Also update availability for future dates
-            updatedRoom.no_available = room.no_available.map((available, index) => {
-              // Calculate new availability (current + increment)
-              // But don't go below the number of booked rooms
-              return Math.max(room.no_booked[index], available + incrementValue)
-            })
 
             return updatedRoom
           }
@@ -346,31 +335,6 @@ export default function RoomManagement() {
     setRooms(rooms.map(room => {
       if (room.id === selectedRoom.id) {
         const newAvailability = [...room.no_available]
-
-        if (applyRange === "single") {
-          // Ensure we don't set availability below booked rooms
-          if (newAvailable >= room.no_booked[selectedDay]) {
-            newAvailability[selectedDay] = newAvailable
-          }
-        } else if (applyRange === "week") {
-          for (let i = 0; i < 7; i++) {
-            if (selectedDay + i < 60 && newAvailable >= room.no_booked[selectedDay + i]) {
-              newAvailability[selectedDay + i] = newAvailable
-            }
-          }
-        } else if (applyRange === "month") {
-          for (let i = 0; i < 30; i++) {
-            if (selectedDay + i < 60 && newAvailable >= room.no_booked[selectedDay + i]) {
-              newAvailability[selectedDay + i] = newAvailable
-            }
-          }
-        } else if (applyRange === "all") {
-          for (let i = 0; i < 60; i++) {
-            if (newAvailable >= room.no_booked[i]) {
-              newAvailability[i] = newAvailable
-            }
-          }
-        }
 
         return { ...room, no_available: newAvailability }
       }
@@ -669,11 +633,6 @@ export default function RoomManagement() {
                 {selectedRoom && (
                   <>
                     Update availability for {selectedRoom.type} rooms on {getDateString(selectedDay)}
-                    {selectedRoom && (
-                      <p className="text-sm text-muted-foreground mt-2">
-                        Note: Available rooms cannot be less than booked rooms ({selectedRoom.no_booked[selectedDay]})
-                      </p>
-                    )}
                   </>
                 )}
               </DialogDescription>

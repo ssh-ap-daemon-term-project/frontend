@@ -28,7 +28,6 @@ export function HotelProfile() {
     address: "",
     city: "",
     description: "",
-    amenities: ""
   })
 
   useEffect(() => {
@@ -48,7 +47,6 @@ export function HotelProfile() {
             address: response.data.address || "",
             city: response.data.city || "",
             description: response.data.description || "",
-            amenities: response.data.amenities ? response.data.amenities.join(", ") : ""
           })
         }
       } catch (error) {
@@ -75,17 +73,6 @@ export function HotelProfile() {
     
     try {
       setSaving(true)
-      
-      // Convert comma-separated amenities to array
-      const amenitiesArray = formData.amenities
-        .split(",")
-        .map(item => item.trim())
-        .filter(item => item !== "")
-      
-      const updatedProfile = {
-        ...formData,
-        amenities: amenitiesArray
-      }
       
       const response = await updateHotelProfile(userId, updatedProfile)
       
@@ -115,35 +102,6 @@ export function HotelProfile() {
     <div className="space-y-8">
       <Card>
         <CardHeader className="relative pb-0">
-          {editing ? (
-            <div className="absolute right-4 top-4 space-x-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setEditing(false)}
-                disabled={saving}
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                form="profile-form"
-                disabled={saving}
-              >
-                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
-                Save Changes
-              </Button>
-            </div>
-          ) : (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="absolute right-4 top-4"
-              onClick={() => setEditing(true)}
-            >
-              <Edit className="mr-2 h-4 w-4" />
-              Edit Profile
-            </Button>
-          )}
           
           <div className="flex flex-col items-center sm:flex-row sm:items-start sm:space-x-6">
             <Avatar className="h-24 w-24">
@@ -220,35 +178,6 @@ export function HotelProfile() {
                       <p className="mt-2 text-muted-foreground">
                         {hotelProfile?.description || "No description provided."}
                       </p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-lg font-medium">Amenities</h3>
-                    {editing ? (
-                      <div className="mt-2">
-                        <Label htmlFor="amenities">Enter amenities (comma separated)</Label>
-                        <Textarea
-                          id="amenities"
-                          name="amenities"
-                          value={formData.amenities}
-                          onChange={handleInputChange}
-                          placeholder="Free WiFi, Pool, Gym, etc."
-                          className="mt-1"
-                        />
-                      </div>
-                    ) : (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {hotelProfile?.amenities && hotelProfile.amenities.length > 0 ? (
-                          hotelProfile.amenities.map((amenity, index) => (
-                            <span key={index} className="rounded-full bg-muted px-3 py-1 text-xs">
-                              {amenity}
-                            </span>
-                          ))
-                        ) : (
-                          <p className="text-sm text-muted-foreground">No amenities listed.</p>
-                        )}
-                      </div>
                     )}
                   </div>
                   
@@ -340,9 +269,6 @@ export function HotelProfile() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-medium">Hotel Rooms</h3>
-                  <Button size="sm">
-                    Manage Rooms
-                  </Button>
                 </div>
                 
                 {hotelProfile?.rooms && hotelProfile.rooms.length > 0 ? (

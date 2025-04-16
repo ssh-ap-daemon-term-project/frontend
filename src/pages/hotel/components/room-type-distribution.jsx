@@ -13,10 +13,12 @@ export function RoomTypeDistribution() {
     async function fetchData() {
       try {
         const response = await getRoomTypeDistribution();
-        if (!response.ok) {
-          setRoomTypeData(null);
-        } else {
-          setRoomTypeData(response.data);
+        if (response.status === 200) {
+          const data = response.data.map((item) => ({
+            name: item.room_type,
+            value: item.count,
+          }));
+          setRoomTypeData(data);
         }
       } catch (error) {
         console.error("Error fetching room type data:", error);

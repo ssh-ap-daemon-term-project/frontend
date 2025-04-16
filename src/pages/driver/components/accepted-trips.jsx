@@ -92,7 +92,7 @@ export function AcceptedTrips() {
     const [searchQuery, setSearchQuery] = useState("")
     const [dateFilter, setDateFilter] = useState(null)
     const [selectedTrip, setSelectedTrip] = useState(null)
-    const [trips, setTrips] = useState(acceptedTripsData) // Start with mock data
+    const [trips, setTrips] = useState(null) // Start with mock data
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const { userId } = useContext(AuthContext)
@@ -141,7 +141,7 @@ export function AcceptedTrips() {
         }
     }, [userId])
 
-    const filteredTrips = trips.filter((trip) => {
+    const filteredTrips = trips?.filter((trip) => {
         // Add null checks to prevent "toLowerCase of undefined" errors
         const passengerMatch = trip.passengerName ? 
             trip.passengerName.toLowerCase().includes(searchQuery.toLowerCase()) : false;
@@ -343,23 +343,11 @@ export function AcceptedTrips() {
                                             <span>Total:</span>
                                             <span>${(selectedTrip.fare + selectedTrip.tip).toFixed(2)}</span>
                                         </div>
-                                        <div className="flex justify-between text-xs text-muted-foreground pt-1">
-                                            <span>Payment method:</span>
-                                            <span>{selectedTrip.paymentMethod}</span>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-3 gap-4 mt-4">
-                                <div className="flex flex-col items-center justify-center rounded-lg border p-2">
-                                    <p className="text-xs text-muted-foreground">Distance</p>
-                                    <p className="text-sm font-medium">{selectedTrip.distance} mi</p>
-                                </div>
-                                <div className="flex flex-col items-center justify-center rounded-lg border p-2">
-                                    <p className="text-xs text-muted-foreground">Duration</p>
-                                    <p className="text-sm font-medium">{selectedTrip.duration} min</p>
-                                </div>
                                 <div className="flex flex-col items-center justify-center rounded-lg border p-2">
                                     <p className="text-xs text-muted-foreground">Date & Time</p>
                                     <p className="text-sm font-medium">{format(new Date(selectedTrip.date), "MMM d, h:mm a")}</p>

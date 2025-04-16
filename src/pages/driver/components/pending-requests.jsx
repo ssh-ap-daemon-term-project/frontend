@@ -123,7 +123,6 @@ export function PendingRequests() {
               <Clock className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
               <h3 className="mt-4 text-lg font-semibold">No pending requests</h3>
               <p className="text-muted-foreground mt-2 mb-8">You'll see new ride requests here when they come in.</p>
-              <Button>Go Online to Receive Requests</Button>
             </div>
           ) : (
             requests.map((request) => (

@@ -1111,7 +1111,7 @@ export default function ItineraryDetailPage() {
                         </Button>
                       )}
                       <Button variant="outline" size="sm" asChild>
-                        <Link to={`/hotels/${room.roomId}`}>View Hotel</Link>
+                        <Link to={`/customer`}>View Hotel</Link>
                       </Button>
                       {room.isPaid ?
                         (<Button size="sm" onClick={() => handleCancelRoom(room)}>
@@ -1198,9 +1198,6 @@ export default function ItineraryDetailPage() {
                         <div className="flex gap-1">
                           {(ride.status === "confirmed" || ride.status === "pending") && (
                             <>
-                              <Button variant="ghost" size="icon" onClick={() => handleEditRide(ride)}>
-                                <PencilIcon className="h-4 w-4" />
-                              </Button>
                               <Button variant="ghost" size="icon" onClick={() => handleCancelRide(ride.id)}>
                                 <TrashIcon className="h-4 w-4 text-destructive" />
                               </Button>
@@ -1930,21 +1927,6 @@ export default function ItineraryDetailPage() {
 
           <form onSubmit={confirmEditRide}>
             <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <label htmlFor="edit-ride-type" className="text-sm font-medium">
-                  Ride Type
-                </label>
-                <Select value={rideForm.type} onValueChange={(value) => setRideForm({ ...rideForm, type: value })}>
-                  <SelectTrigger id="edit-ride-type">
-                    <SelectValue placeholder="Select ride type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="taxi">Taxi</SelectItem>
-                    <SelectItem value="premium">Premium Car</SelectItem>
-                    <SelectItem value="shuttle">Shuttle</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
               <div className="grid gap-2">
                 <label htmlFor="edit-pickup-location" className="text-sm font-medium">
@@ -1983,19 +1965,6 @@ export default function ItineraryDetailPage() {
                   onChange={(e) => setRideForm({ ...rideForm, pickupDateTime: e.target.value })}
                   required
                 />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="edit-driver-service"
-                  className="h-4 w-4 rounded border-gray-300"
-                  checked={rideForm.withDriverService}
-                  onChange={(e) => setRideForm({ ...rideForm, withDriverService: e.target.checked })}
-                />
-                <label htmlFor="edit-driver-service" className="text-sm font-medium">
-                  Request driver service (personal driver for the duration of your stay)
-                </label>
               </div>
 
               <div className="rounded-md bg-muted p-3 text-sm">

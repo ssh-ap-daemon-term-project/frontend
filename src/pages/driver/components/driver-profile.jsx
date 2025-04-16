@@ -73,17 +73,6 @@ export function DriverProfile() {
             <div>
               <CardTitle className="text-2xl">{profile?.name}</CardTitle>
               <CardDescription className="text-lg">{profile?.email}</CardDescription>
-              
-              <div className="mt-2 flex flex-wrap gap-2">
-                <div className="flex items-center">
-                  <Star className="mr-1 h-4 w-4 text-yellow-400" />
-                  <span>{profile?.rating || "No ratings"}</span>
-                </div>
-                <div className="flex items-center ml-2">
-                  <Badge className="mr-1 h-4 w-4" />
-                  <span>{profile?.isVerified ? "Verified Driver" : "Verification Pending"}</span>
-                </div>
-              </div>
             </div>
           </div>
         </CardHeader>
@@ -122,29 +111,6 @@ export function DriverProfile() {
                       <Clock className="mr-2 h-5 w-5 text-muted-foreground" />
                       <span>Member since {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString() : "N/A"}</span>
                     </div>
-                    <div className="flex items-center">
-                      <Badge className="mr-2 h-5 w-5 text-muted-foreground" />
-                      <span>Status: {profile?.isVerified ? 
-                        <span className="text-green-600">Verified</span> : 
-                        <span className="text-amber-600">Pending Verification</span>}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-muted p-4 rounded-md mt-6">
-                <h3 className="text-lg font-medium mb-2">Statistics</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Trips</p>
-                    <p className="text-2xl font-bold">{profile?.totalTrips}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Rating</p>
-                    <div className="flex items-center">
-                      <p className="text-2xl font-bold">{profile?.rating}</p>
-                      <Star className="h-5 w-5 ml-1 text-yellow-400 fill-yellow-400" />
-                    </div>
                   </div>
                 </div>
               </div>
@@ -158,43 +124,24 @@ export function DriverProfile() {
                   </div>
                   
                   <h3 className="text-xl font-bold">
-                    {profile?.vehicleModel || "Vehicle not registered"}
+                    {profile?.carModel || "Vehicle not registered"}
                   </h3>
-                  
                   <div className="mt-4 space-y-2">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-muted-foreground">Year</p>
-                        <p>{profile?.vehicleYear || "N/A"}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Type</p>
-                        <p>{profile?.vehicleType || "N/A"}</p>
+                        <p className="text-sm text-muted-foreground">Car Number</p>
+                        <p>{profile?.carNumber || "N/A"}</p>
                       </div>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">License Plate</p>
-                      <p>{profile?.vehiclePlate || "N/A"}</p>
+                      <p className="text-sm text-muted-foreground">Car Type</p>
+                      <p>{profile?.carType || "N/A"}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">License Number</p>
-                      <p>{profile?.licenseNumber || "N/A"}</p>
+                      <p className="text-sm text-muted-foreground">Seating Capacity</p>
+                      <p>{profile?.seatingCapacity || "N/A"}</p>
                     </div>
                   </div>
-                </div>
-                
-                <div>
-                  <div className="p-4 border rounded-md mb-4">
-                    <h4 className="font-medium mb-2">Status</h4>
-                    <p className={profile?.isVerified ? "text-green-600" : "text-amber-600"}>
-                      {profile?.isVerified ? "Vehicle verified" : "Verification pending"}
-                    </p>
-                  </div>
-                  
-                  <Button className="w-full">
-                    <Edit className="mr-2 h-4 w-4" />
-                    Update Vehicle Information
-                  </Button>
                 </div>
               </div>
             </TabsContent>

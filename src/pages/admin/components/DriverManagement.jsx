@@ -114,7 +114,9 @@ const DriverManagement = () => {
     
             setExpandedDriverDetails({
                 driver: driverResponse.data,
-                rideBookings: rideBookingsResponse.data
+                rideBookings: rideBookingsResponse.data,
+                // store count of rides in driver object with status confirmed
+                totalCompletedRides: rideBookingsResponse.data.filter(booking => booking.status === 'confirmed').length
             });
         } catch (error) {
             toast.error("Failed to fetch driver details");
@@ -390,7 +392,7 @@ const DriverManagement = () => {
                                                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                                                         <div className="bg-primary/10 p-4 rounded-lg">
                                                                                             <div className="text-sm text-muted-foreground">Total Rides</div>
-                                                                                            <div className="text-lg font-bold mt-1">{expandedDriverDetails?.driver?.totalCompletedRides || 0}</div>
+                                                                                            <div className="text-lg font-bold mt-1">{expandedDriverDetails?.totalCompletedRides || 0}</div>
                                                                                         </div>
                                                                                     </div>
                                                                                 </div>
@@ -431,7 +433,7 @@ const DriverManagement = () => {
                                                                                                 <div>
                                                                                                     <div>{format(new Date(booking.pickupTime), "MMM dd, yyyy")}</div>
                                                                                                     <div className="text-xs text-muted-foreground">
-                                                                                                        {format(new Date(booking.pickupTime), "h:mm a")} - {format(new Date(booking.dropTime), "h:mm a")}
+                                                                                                        {format(new Date(booking.pickupTime), "h:mm a")}
                                                                                                     </div>
                                                                                                 </div>
                                                                                             </TableCell>

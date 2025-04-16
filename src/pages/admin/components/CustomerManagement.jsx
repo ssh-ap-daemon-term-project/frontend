@@ -442,7 +442,7 @@ const CustomerManagement = () => {
                                                                                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                                                                         <div className="bg-primary/10 p-4 rounded-lg">
                                                                                             <div className="text-sm text-muted-foreground">Room Bookings</div>
-                                                                                            <div className="text-2xl font-bold mt-1">{expandedCustomerDetails?.roomBookings?.length || 0}</div>
+                                                                                            <div className="text-2xl font-bold mt-1">{expandedCustomerDetails?.bookings?.length || 0}</div>
                                                                                         </div>
                                                                                         <div className="bg-primary/10 p-4 rounded-lg">
                                                                                             <div className="text-sm text-muted-foreground">Ride Bookings</div>
@@ -476,7 +476,7 @@ const CustomerManagement = () => {
                                                                                     </TableRow>
                                                                                 </TableHeader>
                                                                                 <TableBody>
-                                                                                    {expandedCustomerDetails?.roomBookings?.map(booking => (
+                                                                                    {expandedCustomerDetails?.bookings?.map(booking => (
                                                                                         <TableRow key={booking.id}>
                                                                                             <TableCell className="font-medium">{booking.hotelName}</TableCell>
                                                                                             <TableCell className="capitalize">{booking.roomType}</TableCell>

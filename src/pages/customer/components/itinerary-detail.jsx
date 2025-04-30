@@ -334,12 +334,12 @@ export default function ItineraryDetailPage() {
 
     try {
       const activityData = {
-        startTime: new Date(activityForm.startDateTime).toISOString(),
-        endTime: new Date(activityForm.endDateTime).toISOString(),
+        startTime: activityForm.startDateTime,
+        endTime: activityForm.endDateTime,
         location: activityForm.location,
         description: activityForm.description,
       }
-
+      console.log("Activity Data:", activityData)
       const response = await addScheduleItem(itineraryId, activityData)
 
       setItinerary({
@@ -381,8 +381,8 @@ export default function ItineraryDetailPage() {
       const activityData = {
         description: activityForm.description,
         location: activityForm.location,
-        startTime: new Date(activityForm.startDateTime).toISOString(),
-        endTime: new Date(activityForm.endDateTime).toISOString(),
+        startTime: activityForm.startDateTime,
+        endTime: activityForm.endDateTime,
       }
 
       const response = await updateScheduleItem(itineraryId, selectedActivity.id, activityData)
@@ -489,7 +489,7 @@ export default function ItineraryDetailPage() {
       const rideData = {
         pickupLocation: rideForm.pickupLocation,
         dropoffLocation: rideForm.dropoffLocation,
-        pickupDateTime: new Date(rideForm.pickupDateTime).toISOString(),
+        pickupDateTime: rideForm.pickupDateTime,
         numberOfPersons: itinerary.numberOfPersons,
       }
 
@@ -535,7 +535,7 @@ export default function ItineraryDetailPage() {
         type: rideForm.type,
         pickupLocation: rideForm.pickupLocation,
         dropoffLocation: rideForm.dropoffLocation,
-        pickupDateTime: new Date(rideForm.pickupDateTime).toISOString(),
+        pickupDateTime: new Date(rideForm.pickupDateTime),
         withDriverService: rideForm.withDriverService,
       }
 
@@ -778,7 +778,7 @@ export default function ItineraryDetailPage() {
     const date = new Date(item.startTime)
     date.setHours(0, 0, 0, 0)
 
-    const dateKey = date.toISOString()
+    const dateKey = date
     if (!acc[dateKey]) {
       acc[dateKey] = []
     }
@@ -1390,7 +1390,7 @@ export default function ItineraryDetailPage() {
 
       {/* Add Room Dialog */}
       <Dialog open={showAddRoomDialog} onOpenChange={setShowAddRoomDialog}>
-        <DialogContent className="max-w-3xl">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add Room to Itinerary</DialogTitle>
             <DialogDescription>Select a room to add to your itinerary</DialogDescription>
@@ -1744,7 +1744,10 @@ export default function ItineraryDetailPage() {
                     id="startDateTime"
                     type="datetime-local"
                     value={activityForm.startDateTime}
-                    onChange={(e) => setActivityForm({ ...activityForm, startDateTime: e.target.value })}
+                    onChange={(e) => {
+                      setActivityForm({ ...activityForm, startDateTime: e.target.value })
+                      console.log(e.target.value)
+                    }}
                     required
                   />
                 </div>

@@ -1,3 +1,9 @@
+* {
+  /* margin: 0; */
+  /* overflow: hidden; */
+  cursor: none !important; /* hide normal cursor */
+  /* background-color: #111; */
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,6 +13,14 @@
   margin: 0;
   padding: 0;
 }
+
+
+/* .content {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  color: white;
+} */
 
 html {
   scroll-behavior: smooth;

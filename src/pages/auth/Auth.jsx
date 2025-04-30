@@ -79,7 +79,9 @@ const Auth = () => {
                 response.data.phone,
                 response.data.userType
             );
-
+            // set the token_exp in localStorage to 1min
+            const exp = Date.now() + 60 * 60 * 24 * 1000; // 24 hours in milliseconds
+            localStorage.setItem('token_exp', exp);
             // Redirect to appropriate dashboard
             navigate('/');
         } catch (err) {

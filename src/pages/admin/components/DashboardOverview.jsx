@@ -145,7 +145,7 @@ const DashboardOverview = () => {
     return (
         <div className="flex flex-col gap-5">
             <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold tracking-tight">Welcome Leviathan!!</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Welcome Back</h1>
                 <div className="text-sm text-muted-foreground">
                     {new Date().toLocaleDateString("en-US", {
                         weekday: "long",
@@ -274,7 +274,7 @@ const DashboardOverview = () => {
                                                     {booking.room} • {booking.startDate} to {booking.endDate}
                                                 </p>
                                             </div>
-                                            <div className="font-medium">${booking.amount}</div>
+                                            <div className="font-medium">${booking.amount.toFixed(2)}</div>
                                         </div>
                                     ))}
                                 </div>

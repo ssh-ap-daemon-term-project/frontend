@@ -14,85 +14,11 @@ import { toast } from "react-toastify"
 import { AuthContext } from "@/context/AuthContext"
 import { getAcceptedTrips } from "@/api/driver.jsx" // Ensure this is correctly implemented
 
-// Keep this as fallback data in case API fails
-const acceptedTripsData = [
-    {
-        id: "t-123456",
-        passengerName: "Emma Wilson",
-        passengerAvatar: "/placeholder.svg?height=40&width=40",
-        pickupLocation: "123 Main St, Downtown",
-        dropoffLocation: "456 Park Ave, Uptown",
-        date: "2023-11-27T14:30:00",
-        distance: 5.2,
-        duration: 18,
-        fare: 15.75,
-        status: "confirmed",
-        paymentMethod: "Credit Card",
-        tip: 3.0,
-    },
-    {
-        id: "t-234567",
-        passengerName: "Alex Johnson",
-        passengerAvatar: "/placeholder.svg?height=40&width=40",
-        pickupLocation: "789 Broadway, Midtown",
-        dropoffLocation: "101 River Rd, Eastside",
-        date: "2023-11-26T10:15:00",
-        distance: 3.8,
-        duration: 12,
-        fare: 12.5,
-        status: "completed",
-        paymentMethod: "Cash",
-        tip: 2.0,
-    },
-    {
-        id: "t-345678",
-        passengerName: "Sophia Martinez",
-        passengerAvatar: "/placeholder.svg?height=40&width=40",
-        pickupLocation: "222 Oak St, Westside",
-        dropoffLocation: "333 Pine Ave, Northside",
-        date: "2023-11-25T18:45:00",
-        distance: 7.5,
-        duration: 25,
-        fare: 22.3,
-        status: "completed",
-        paymentMethod: "Credit Card",
-        tip: 4.5,
-    },
-    {
-        id: "t-456789",
-        passengerName: "Michael Brown",
-        passengerAvatar: "/placeholder.svg?height=40&width=40",
-        pickupLocation: "444 Maple Dr, Southside",
-        dropoffLocation: "555 Elm St, Downtown",
-        date: "2023-11-24T09:30:00",
-        distance: 4.3,
-        duration: 15,
-        fare: 14.2,
-        status: "completed",
-        paymentMethod: "Credit Card",
-        tip: 2.5,
-    },
-    {
-        id: "t-567890",
-        passengerName: "David Lee",
-        passengerAvatar: "/placeholder.svg?height=40&width=40",
-        pickupLocation: "666 Cedar Ln, Eastside",
-        dropoffLocation: "777 Birch Ave, Westside",
-        date: "2023-11-23T16:20:00",
-        distance: 6.1,
-        duration: 22,
-        fare: 18.9,
-        status: "completed",
-        paymentMethod: "Cash",
-        tip: 0.0,
-    },
-]
-
 export function AcceptedTrips() {
     const [searchQuery, setSearchQuery] = useState("")
     const [dateFilter, setDateFilter] = useState(null)
     const [selectedTrip, setSelectedTrip] = useState(null)
-    const [trips, setTrips] = useState(null) // Start with mock data
+    const [trips, setTrips] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const { userId } = useContext(AuthContext)
@@ -102,12 +28,11 @@ export function AcceptedTrips() {
             try {
                 setLoading(true)
                 const response = await getAcceptedTrips(userId)
-                console.log("API response:", response.data) // Add logging to see the response structure
-                
+
                 // Transform the API data to match the expected structure if needed
                 const formattedTrips = response.data.map(trip => ({
                     id: trip.id || `temp-${Math.random().toString(36).substr(2, 9)}`,
-                    passengerName: "Customer", // Fallback name since API might not provide this
+                    passengerName: trip.passengerName || "Unknown",
                     passengerAvatar: "/placeholder.svg?height=40&width=40",
                     pickupLocation: trip.pickupLocation || "Not specified",
                     dropoffLocation: trip.dropoffLocation || "Not specified",
@@ -120,42 +45,43 @@ export function AcceptedTrips() {
                     tip: 0
                 }));
 
-                setTrips(formattedTrips.length > 0 ? formattedTrips : acceptedTripsData);
+                // setTrips(formattedTrips.length > 0 ? formattedTrips : [acceptedTripsData[0]]);
+                setTrips(formattedTrips)
             } catch (err) {
                 console.error("Error fetching trips:", err)
                 setError("Failed to load trips")
                 toast.error("Could not load accepted trips")
                 // Fallback to mock data on error
-                setTrips(acceptedTripsData)
+                // setTrips(acceptedTripsData)
             } finally {
                 setLoading(false)
             }
         }
-        
+
         if (userId) {
             fetchTrips()
         } else {
             // If no userId, use mock data and don't show loading state
-            setTrips(acceptedTripsData)
+            // setTrips(acceptedTripsData)
             setLoading(false)
         }
     }, [userId])
 
     const filteredTrips = trips?.filter((trip) => {
         // Add null checks to prevent "toLowerCase of undefined" errors
-        const passengerMatch = trip.passengerName ? 
+        const passengerMatch = trip.passengerName ?
             trip.passengerName.toLowerCase().includes(searchQuery.toLowerCase()) : false;
-        
-        const pickupMatch = trip.pickupLocation ? 
+
+        const pickupMatch = trip.pickupLocation ?
             trip.pickupLocation.toLowerCase().includes(searchQuery.toLowerCase()) : false;
-        
-        const dropoffMatch = trip.dropoffLocation ? 
+
+        const dropoffMatch = trip.dropoffLocation ?
             trip.dropoffLocation.toLowerCase().includes(searchQuery.toLowerCase()) : false;
-        
+
         const matchesSearch = passengerMatch || pickupMatch || dropoffMatch;
 
         // Make sure date exists and is a string before using includes
-        const matchesDate = dateFilter && trip.date ? 
+        const matchesDate = dateFilter && dateFilter !== "all" && trip.date ?
             String(trip.date).includes(dateFilter) : true;
 
         return matchesSearch && matchesDate;
@@ -208,8 +134,8 @@ export function AcceptedTrips() {
                     {!loading && error && (
                         <div className="py-8 text-center text-destructive">
                             <p>{error}</p>
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 onClick={() => {
                                     setError(null)
                                     setLoading(true)

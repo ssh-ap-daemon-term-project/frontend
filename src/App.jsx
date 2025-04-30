@@ -1,7 +1,12 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React, { useContext, useEffect } from 'react';
+import { Routes, Route, useNavigate } from 'react-router-dom'; // Add useNavigate
+import { toast } from 'react-toastify';
+import { signout } from './api/auth'; // Import your signout function
+import { AuthContext } from './context/AuthContext'; // Import your auth context
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { Canvas } from "@react-three/fiber";
+import CustomCursor from "./components/models/Cursor";
 import Navbar from './components/navbar/Navbar';
 import Auth from './pages/auth/Auth';
 import AdminDashboard from './pages/admin/Admin';
@@ -27,8 +32,65 @@ import DriverProfile from './pages/driver/components/driver-profile';
 import AdminProfile from './pages/admin/components/admin-profile';
 
 function App() {
+  const navigate = useNavigate();
+  const { contextSignout } = useContext(AuthContext); // Get logout function from context
+
+  useEffect(() => {
+    // Get token expiration from localStorage instead of cookies
+    const exp = localStorage.getItem("token_exp");
+
+    if (exp) {
+      const delay = parseInt(exp) - Date.now();
+      if (delay > 0) {
+        const timer = setTimeout(async () => {
+          try {
+            await signout();
+            contextSignout();
+            // Clear localStorage on logout
+            localStorage.removeItem("token_exp");
+            toast.info("Your session has expired. Please log in again.");
+            navigate("/");
+          } catch (error) {
+            console.error("Logout failed:", error);
+          }
+        }, delay);
+        return () => clearTimeout(timer);
+      } else {
+        // Handle expired token case
+        const handleExpiredToken = async () => {
+          try {
+            await signout();
+            contextSignout();
+            // Clear localStorage on logout
+            localStorage.removeItem("token_exp");
+            toast.info("Your session has expired. Please log in again.");
+            navigate("/");
+          } catch (error) {
+            console.error("Logout failed:", error);
+          }
+        };
+        handleExpiredToken();
+      }
+    }
+  }, [navigate, contextSignout]);
+
   return (
     <>
+      <Canvas
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          pointerEvents: 'none', // important! allows clicks to pass through
+          zIndex: 99999, // higher than normal content
+        }}
+        camera={{ position: [0, 0, 5] }}
+      >
+        <ambientLight />
+        <CustomCursor />
+      </Canvas>
       <Header />
       <Routes>
         <Route path="/" element={<Home />} />

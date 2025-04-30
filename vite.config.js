@@ -15,9 +15,9 @@ export default defineConfig({
     },
 
     manifest: {
-      name: 'frontend',
-      short_name: 'frontend',
-      description: 'frontend',
+      name: 'CruiseAide',
+      short_name: 'CruiseAide',
+      description: 'CruiseAide: the AI travel planner!',
       theme_color: '#ffffff',
     },
 

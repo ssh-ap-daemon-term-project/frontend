@@ -1,0 +1,12 @@
+# filepath: netlify.toml
+[build]
+  # Make sure this matches your build output directory (e.g., dist, build)
+  publish = "dist"
+  # Your build command (e.g., npm run build)
+  command = "npm run build"
+
+# The magic rewrite rule
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

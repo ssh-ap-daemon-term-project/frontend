@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-    baseURL: 'http://127.0.0.1:8000/api',
+    baseURL: 'https://backend-hktx.onrender.com/api',
     withCredentials: true // allows HTTP-only cookies to be sent
 });
 

@@ -11,7 +11,7 @@ import axios from "axios"
 import { toast } from "react-toastify"
 
 export default function CustChat() {
-  const API_URL = "http://localhost:8000/api"
+  const API_URL = "https://backend-hktx.onrender.com/api"
 
   const [activeTab, setActiveTab] = useState("travel")
   
